@@ -1,0 +1,13 @@
+{
+ "registered_at": "2026-09-07T21:00:00Z",
+ "claims": [
+  {
+   "id": "c_delta_beats_direct",
+   "primary_outcome": "MAE(E1,random)"
+  },
+  {
+   "id": "c_svp_beats_tzvp",
+   "primary_outcome": "MAE(E1,random)"
+  }
+ ]
+}

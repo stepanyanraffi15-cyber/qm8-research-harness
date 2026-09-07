@@ -60,6 +60,12 @@ class Result:
     fit_seconds: float
     extras: dict = field(default_factory=dict)
 
+    # Per-molecule absolute errors, aligned to the eval partition's order, and
+    # populated only when return_errors=True. critic.py pairs two configs on
+    # these. Molecule-level pairing is stronger than seed-level pairing, and it
+    # sidesteps the batched-server nondeterminism that makes seed-pairing leaky.
+    errors: np.ndarray | None = field(default=None, repr=False)
+
     def as_dict(self) -> dict:
         return {
             "config": self.config,
@@ -106,6 +112,7 @@ def run(
     speed: str = "fast",
     eval_on: str = "validation",
     audit_token: str | None = None,
+    return_errors: bool = False,
 ) -> Result:
     """Fit and score one configuration.
 
@@ -129,6 +136,15 @@ def run(
         )
     if eval_on not in ("validation", "sealed_test"):
         raise ValueError(f"eval_on must be validation or sealed_test, got {eval_on!r}")
+
+    # Memoize on the full configuration. An audit re-runs the same config on both
+    # partitions and across several claims; at speed="full" that is minutes of
+    # refitting for an answer already computed. The key includes everything that
+    # can change a number, so this cannot silently serve a stale result.
+    ckey = (target, method, cheap_level, split, n_train, seed, speed, eval_on)
+    hit = _CACHE.get(("fit", ckey))
+    if hit is not None and (hit.errors is not None or not return_errors):
+        return hit
 
     env = _env()
     parts = _split(split)
@@ -162,7 +178,7 @@ def run(
     fit_seconds = time.perf_counter() - t0
 
     err = np.abs(pred - y_ref[ev])
-    return Result(
+    result = Result(
         config=dict(
             target=target, method=method, cheap_level=cheap_level, split=split,
             n_train=int(len(tr)), seed=seed, speed=speed,
@@ -173,7 +189,10 @@ def run(
         eval_on=eval_on,
         fit_seconds=fit_seconds,
         extras={"rmse": float(np.sqrt((err**2).mean())), "max_err": float(err.max())},
+        errors=err if return_errors else None,
     )
+    _CACHE[("fit", ckey)] = result
+    return result
 
 
 def baseline_table(split: str = "random", speed: str = "fast", seed: int = 0) -> list[dict]:

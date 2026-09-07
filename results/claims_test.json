@@ -1,0 +1,120 @@
+[
+ {
+  "id": "c_delta_beats_direct",
+  "kind": "comparison",
+  "statement": "Delta beats direct on E1",
+  "scope": {
+   "target": "E1",
+   "split": "random"
+  },
+  "evidence": [
+   "e_001",
+   "e_002"
+  ],
+  "config_a": {
+   "target": "E1",
+   "method": "direct",
+   "cheap_level": "PBE0-SVP",
+   "split": "random",
+   "seed": 0
+  },
+  "config_b": {
+   "target": "E1",
+   "method": "delta",
+   "cheap_level": "PBE0-SVP",
+   "split": "random",
+   "seed": 0
+  }
+ },
+ {
+  "id": "c_svp_beats_tzvp",
+  "kind": "comparison",
+  "statement": "SVP baseline beats TZVP",
+  "scope": {
+   "target": "E1",
+   "split": "random"
+  },
+  "evidence": [
+   "e_001"
+  ],
+  "config_a": {
+   "target": "E1",
+   "method": "delta",
+   "cheap_level": "PBE0-TZVP",
+   "split": "random",
+   "seed": 0
+  },
+  "config_b": {
+   "target": "E1",
+   "method": "delta",
+   "cheap_level": "PBE0-SVP",
+   "split": "random",
+   "seed": 0
+  }
+ },
+ {
+  "id": "c_fabricated",
+  "kind": "comparison",
+  "statement": "Made up",
+  "scope": {
+   "target": "E1",
+   "split": "random"
+  },
+  "evidence": [
+   "e_nope"
+  ],
+  "config_a": {
+   "target": "E1",
+   "method": "direct",
+   "cheap_level": "PBE0-SVP",
+   "split": "random",
+   "seed": 0
+  },
+  "config_b": {
+   "target": "E1",
+   "method": "delta",
+   "cheap_level": "PBE0-SVP",
+   "split": "random",
+   "seed": 0
+  }
+ },
+ {
+  "id": "c_overscoped",
+  "kind": "comparison",
+  "statement": "Delta beats direct everywhere",
+  "scope": {
+   "target": "all",
+   "split": "random"
+  },
+  "evidence": [
+   "e_001",
+   "e_002"
+  ],
+  "config_a": {
+   "target": "E1",
+   "method": "direct",
+   "cheap_level": "PBE0-SVP",
+   "split": "random",
+   "seed": 0
+  },
+  "config_b": {
+   "target": "E1",
+   "method": "delta",
+   "cheap_level": "PBE0-SVP",
+   "split": "random",
+   "seed": 0
+  }
+ },
+ {
+  "id": "c_nocontrol",
+  "kind": "mechanism",
+  "statement": "Reindexing fixes ordering",
+  "scope": {
+   "target": "f1",
+   "split": "random"
+  },
+  "evidence": [
+   "e_001"
+  ]
+ }
+]

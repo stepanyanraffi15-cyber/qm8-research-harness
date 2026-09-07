@@ -1,0 +1,216 @@
+{
+  "preregistration": {
+    "exists": true,
+    "sha256": "6bb3ca76d2edde53041a6dc8556f6209f93c122817991014d7d3df2090fdb45c",
+    "registered_at": "2026-09-07T21:00:00Z"
+  },
+  "n_claims": 5,
+  "signed": 2,
+  "narrowed": 1,
+  "rejected": 2,
+  "confirmatory": 2,
+  "exploratory": 3,
+  "failure_histogram": {
+    "unsupported_claim": 1,
+    "noise_as_signal": 0,
+    "overscoped": 3,
+    "no_control": 1,
+    "gave_up": 0,
+    "abstained_on_findable": 0
+  },
+  "verdicts": [
+    {
+      "claim_id": "c_delta_beats_direct",
+      "verdict": "signed",
+      "kind": "confirmatory",
+      "reasons": [],
+      "checks": {
+        "split_hash": {
+          "passed": true,
+          "detail": "split random hash e7edcaba59fa"
+        },
+        "evidence_resolves": {
+          "passed": true,
+          "detail": "2 evidence ids resolve"
+        },
+        "scope": {
+          "passed": true,
+          "detail": "quantifier matches the configs run"
+        },
+        "control": {
+          "passed": true,
+          "detail": "not a mechanistic claim"
+        },
+        "comparisons_in_family": {
+          "passed": true,
+          "detail": "23 runs"
+        },
+        "sealed_rerun": {
+          "passed": true,
+          "detail": "sealed MAE a=0.19251 b=0.07208 (diff +0.12042)"
+        },
+        "noise_floor": {
+          "passed": true,
+          "detail": "paired bootstrap CI [0.112357, 0.128452] on 2178 molecules"
+        },
+        "val_to_test_gap": {
+          "passed": true,
+          "detail": "val->test gap a=-0.00030 b=+0.00449"
+        },
+        "multiplicity": {
+          "passed": true,
+          "detail": "Holm rank 1/2, p=0.0, threshold=0.025"
+        }
+      }
+    },
+    {
+      "claim_id": "c_svp_beats_tzvp",
+      "verdict": "signed",
+      "kind": "confirmatory",
+      "reasons": [],
+      "checks": {
+        "split_hash": {
+          "passed": true,
+          "detail": "split random hash e7edcaba59fa"
+        },
+        "evidence_resolves": {
+          "passed": true,
+          "detail": "1 evidence ids resolve"
+        },
+        "scope": {
+          "passed": true,
+          "detail": "quantifier matches the configs run"
+        },
+        "control": {
+          "passed": true,
+          "detail": "not a mechanistic claim"
+        },
+        "comparisons_in_family": {
+          "passed": true,
+          "detail": "23 runs"
+        },
+        "sealed_rerun": {
+          "passed": true,
+          "detail": "sealed MAE a=0.06298 b=0.07208 (diff -0.00910)"
+        },
+        "noise_floor": {
+          "passed": true,
+          "detail": "paired bootstrap CI [-0.010992, -0.007111] on 2178 molecules"
+        },
+        "val_to_test_gap": {
+          "passed": true,
+          "detail": "val->test gap a=+0.00407 b=+0.00449"
+        },
+        "multiplicity": {
+          "passed": true,
+          "detail": "Holm rank 2/2, p=0.0, threshold=0.05"
+        }
+      }
+    },
+    {
+      "claim_id": "c_fabricated",
+      "verdict": "rejected",
+      "kind": "exploratory",
+      "reasons": [
+        "unsupported_claim: evidence not in log: ['e_nope']",
+        "overscoped: no logged runs behind the claim"
+      ],
+      "checks": {
+        "split_hash": {
+          "passed": true,
+          "detail": "split random hash e7edcaba59fa"
+        },
+        "evidence_resolves": {
+          "passed": false,
+          "detail": "evidence not in log: ['e_nope']"
+        },
+        "scope": {
+          "passed": false,
+          "detail": "no logged runs behind the claim"
+        },
+        "control": {
+          "passed": true,
+          "detail": "not a mechanistic claim"
+        },
+        "comparisons_in_family": {
+          "passed": true,
+          "detail": "23 runs"
+        }
+      }
+    },
+    {
+      "claim_id": "c_overscoped",
+      "verdict": "narrowed",
+      "kind": "exploratory",
+      "reasons": [
+        "overscoped: claims all targets but only ran ['E1']"
+      ],
+      "checks": {
+        "split_hash": {
+          "passed": true,
+          "detail": "split random hash e7edcaba59fa"
+        },
+        "evidence_resolves": {
+          "passed": true,
+          "detail": "2 evidence ids resolve"
+        },
+        "scope": {
+          "passed": false,
+          "detail": "claims all targets but only ran ['E1']"
+        },
+        "control": {
+          "passed": true,
+          "detail": "not a mechanistic claim"
+        },
+        "comparisons_in_family": {
+          "passed": true,
+          "detail": "0 runs"
+        },
+        "sealed_rerun": {
+          "passed": true,
+          "detail": "sealed MAE a=0.19251 b=0.07208 (diff +0.12042)"
+        },
+        "noise_floor": {
+          "passed": true,
+          "detail": "paired bootstrap CI [0.112357, 0.128452] on 2178 molecules"
+        },
+        "val_to_test_gap": {
+          "passed": true,
+          "detail": "val->test gap a=-0.00030 b=+0.00449"
+        }
+      },
+      "narrowed_statement": "Delta beats direct everywhere \u2014 for target=all on the random split only."
+    },
+    {
+      "claim_id": "c_nocontrol",
+      "verdict": "rejected",
+      "kind": "exploratory",
+      "reasons": [
+        "overscoped: claims target='f1' but ran ['E1']",
+        "no_control: mechanistic claim with no control experiment"
+      ],
+      "checks": {
+        "split_hash": {
+          "passed": true,
+          "detail": "split random hash e7edcaba59fa"
+        },
+        "evidence_resolves": {
+          "passed": true,
+          "detail": "1 evidence ids resolve"
+        },
+        "scope": {
+          "passed": false,
+          "detail": "claims target='f1' but ran ['E1']"
+        },
+        "control": {
+          "passed": false,
+          "detail": "mechanistic claim with no control experiment"
+        },
+        "comparisons_in_family": {
+          "passed": true,
+          "detail": "0 runs"
+        }
+      }
+    }
+  ]
+}
