@@ -1,0 +1,20 @@
+[project]
+name = "qm8-research-harness"
+version = "0.1.0"
+description = "An agent that does research on QM8, and the referee that decides whether it did"
+requires-python = ">=3.10"
+dependencies = [
+    "openai>=1.0",       # OpenAI-compatible: vLLM, OpenRouter, or a hosted API
+    "numpy>=1.26",
+    "scipy>=1.11",       # bootstrap CIs, paired tests
+    "scikit-learn>=1.3",
+    "lightgbm>=4.0",     # the prediction layer — no LLM anywhere near it
+    "rdkit>=2023.9",     # featurization: Morgan fingerprints + descriptors
+    "tqdm>=4.66",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
