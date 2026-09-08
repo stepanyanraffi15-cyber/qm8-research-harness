@@ -1,0 +1,40 @@
+{
+  "claim_id": "h_misorder_signature",
+  "verdict": "signed",
+  "kind": "confirmatory",
+  "reasons": [],
+  "checks": {
+    "split_hash": {
+      "passed": true,
+      "detail": "split random hash e7edcaba59fa"
+    },
+    "evidence_resolves": {
+      "passed": true,
+      "detail": "1 evidence ids resolve"
+    },
+    "scope": {
+      "passed": true,
+      "detail": "quantifier matches the configs run"
+    },
+    "control": {
+      "passed": true,
+      "detail": "coin-flip control AUC 0.4862 CI [0.4532, 0.518]"
+    },
+    "comparisons_in_family": {
+      "passed": true,
+      "detail": "1 runs"
+    },
+    "sealed_rerun": {
+      "passed": true,
+      "detail": "sealed: full 0.013946, selective@50% 0.011080, random 0.013954"
+    },
+    "noise_floor": {
+      "passed": true,
+      "detail": "selective 0.011080 vs random 0.013954, random 95% CI [0.012426, 0.015482]"
+    },
+    "direction": {
+      "passed": true,
+      "detail": "claim says abstention helps at 50% coverage; it does"
+    }
+  }
+}

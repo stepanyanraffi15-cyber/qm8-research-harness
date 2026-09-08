@@ -53,7 +53,7 @@ without an audit token that nothing importable from `tools.py` holds.
 
 | # | Finding | Status |
 |---|---|---|
-| A | **Misordering is predictable from structure alone**, giving an abstention rule that needs no CC2. AUC 0.693, error 3.52× higher in the top risk quartile, beats random rejection at every coverage. | **pre-registered, supported** |
+| A | **Misordering is predictable from structure alone**, giving an abstention rule that needs no CC2. AUC 0.693, error 3.52× higher in the top risk quartile, beats random rejection at every coverage. | **pre-registered · signed on the sealed set · confirmatory** |
 | B | **174× label efficiency** — Δ-learning on 100 CC2 labels beats direct learning on all 17,429. | measured, 3 seeds |
 | C | **Δ-learning's real value is robustness, not accuracy** — under scaffold shift direct learning is worse than doing nothing; Δ is not. | measured |
 | D | **MoleculeNet's `qm8.csv` ships 12 tasks under 16 headers.** One level of theory is a verbatim duplicate. | verified upstream |
@@ -319,6 +319,22 @@ means anything — random rejection at matched coverage:
 
 At half coverage the error falls **31%** while random rejection stays flat.
 
+#### Audited on the sealed test set
+
+This is the one claim in the project that clears every gate: registered before
+measurement, re-scored at full precision on a partition nothing had touched, with
+the registered control.
+
+```
+sealed    full 0.013946    selective@50% 0.011080    random 0.013954
+          random 95% CI [0.012426, 0.015482]  -> selective falls below it
+control   coin-flip classifier AUC 0.4862  CI [0.4532, 0.518]  -> null
+verdict   SIGNED · CONFIRMATORY
+```
+
+Note the honest val→test gap: full-coverage error is 0.0139 on the sealed set
+against 0.0124 on validation. The selective advantage survives it.
+
 This is the part that maps onto screening novel chemistry rather than onto a
 benchmark: a model that declines on the compounds it is about to get wrong, from
 structure alone, before any expensive calculation is run. It is worth more to a
@@ -364,9 +380,6 @@ from **0.075 to 0.967**. There is no path by which test information reaches the 
   and must not be read as "LLM agents cannot do this."
 - **Three seeds is thin.** The agent's E1 interval spans [0.065, 0.230]. The right response
   is more seeds, not a stronger sentence.
-- **The abstention result is on validation, not the sealed set.** It is pre-registered and
-  controlled, but the sealed-set audit has not been run on it. Until it is, treat §11 as
-  strong evidence rather than a signed claim.
 - **Citations inherited from earlier planning documents are unverified.** The arXiv ids in
   `docs/PLAN.md` came from LLM-assisted drafts and several sit at or past the assistant's
   knowledge cutoff. They are labelled *course canon* rather than *verified* for that reason,

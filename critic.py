@@ -351,6 +351,38 @@ class Critic:
             return v
 
         # Check 3 and 4: the only place the sealed test set is ever touched.
+        if claim.get("kind") == "selective":
+            stat = self._sealed_selective(claim)
+            v.checks["sealed_rerun"] = {"passed": True, "detail": stat["summary"]}
+            v.checks["noise_floor"] = {
+                "passed": stat["beats_random"],
+                "detail": (f"selective {stat['selective_mae']:.6f} vs random "
+                           f"{stat['random_mae']:.6f}, random 95% CI {stat['random_ci95']}"),
+            }
+            v.checks["direction"] = {
+                "passed": stat["beats_random"],
+                "detail": (f"claim says abstention helps at {stat['coverage']:.0%} coverage; "
+                           f"{'it does' if stat['beats_random'] else 'it does not'}"),
+            }
+            v.checks["control"] = {
+                "passed": stat["control_null"],
+                "detail": (f"coin-flip control AUC {stat['control_auc']:.4f} "
+                           f"CI {stat['control_auc_ci']}"),
+            }
+            if not stat["beats_random"]:
+                v.verdict = REJECTED
+                v.reasons.append(
+                    f"noise_as_signal: selective prediction does not beat random rejection "
+                    f"at matched coverage on the sealed set"
+                )
+            elif not stat["control_null"]:
+                v.verdict = REJECTED
+                v.reasons.append(
+                    f"no_control: the coin-flip control also separates "
+                    f"(AUC {stat['control_auc']:.3f}), so the signal is not misordering"
+                )
+            return v
+
         if claim.get("kind") == "comparison":
             stat = self._sealed_comparison(claim)
             v.checks["sealed_rerun"] = {"passed": True, "detail": stat["summary"]}
@@ -389,6 +421,85 @@ class Critic:
                 )
             v.checks["_p_value"] = stat["p_value"]
         return v
+
+    def _sealed_selective(self, claim: dict) -> dict:
+        """Adjudicate a selective-prediction claim on the sealed test set.
+
+        The abstention result is the project's most useful finding and it does not
+        fit the two-config comparison path, so it gets its own verifier rather
+        than being reported as "strong evidence" and left unaudited.
+
+        Everything is refit from `train` only. The risk classifier never sees the
+        sealed partition it scores, and the baseline is random rejection at the
+        SAME coverage -- a model that looks good discarding 30% of molecules has
+        proven nothing until it beats throwing 30% away at random.
+        """
+        import lightgbm as lgb
+        from sklearn.metrics import roc_auc_score
+
+        cfg = claim.get("config_b") or {}
+        target = cfg.get("target", "f1")
+        level = cfg.get("cheap_level", "PBE0-SVP")
+        split = cfg.get("split", "random")
+        coverage = float(claim.get("coverage", 0.5))
+
+        env = models._env()
+        names, T, pos, X = env["names"], env["targets"], env["positions"], env["X"]
+        parts = models._split(split)
+        tr, te = parts["train"], parts["sealed_test"]
+
+        def misordered(idx):
+            i = lambda pr, lv: names.index(f"{pr}-{lv}")  # noqa: E731
+            f1c, f2c = T[pos[idx], i("f1", "CC2")], T[pos[idx], i("f2", "CC2")]
+            f1t, f2t = T[pos[idx], i("f1", level)], T[pos[idx], i("f2", level)]
+            given = np.abs(f1t - f1c) + np.abs(f2t - f2c)
+            swap = np.abs(f2t - f1c) + np.abs(f1t - f2c)
+            return (swap < given).astype(int)
+
+        y_tr, y_te = misordered(tr), misordered(te)
+
+        def fit(labels):
+            clf = lgb.LGBMClassifier(n_estimators=300, learning_rate=0.05, num_leaves=31,
+                                     random_state=0, n_jobs=-1, verbose=-1,
+                                     force_row_wise=True)
+            clf.fit(X[pos[tr]], labels)
+            return clf.predict_proba(X[pos[te]])[:, 1]
+
+        p = fit(y_tr)
+        rng = np.random.default_rng(999)
+        p_ctrl = fit((rng.random(len(y_tr)) < y_tr.mean()).astype(int))
+
+        r = models.run(target=target, method="delta", cheap_level=level, split=split,
+                       speed="full", eval_on="sealed_test",
+                       audit_token=models.AUDIT_TOKEN, return_errors=True)
+        err = r.errors
+        k = max(1, int(round(coverage * len(err))))
+        selective = float(err[np.argsort(p)[:k]].mean())
+
+        rb = np.random.default_rng(0)
+        rand = np.sort([float(err[rb.choice(len(err), k, replace=False)].mean())
+                        for _ in range(2000)])
+        lo, hi = float(rand[50]), float(rand[1950])
+
+        ctrl_auc = float(roc_auc_score(y_te, p_ctrl)) if len(set(y_te)) > 1 else 0.5
+        ab = np.random.default_rng(1)
+        idx = ab.integers(0, len(p_ctrl), size=(500, len(p_ctrl)))
+        caucs = np.sort([roc_auc_score(y_te[j], p_ctrl[j]) for j in idx if len(set(y_te[j])) > 1])
+
+        return {
+            "coverage": coverage,
+            "full_mae": r.mae,
+            "selective_mae": selective,
+            "random_mae": float(rand.mean()),
+            "random_ci95": [round(lo, 6), round(hi, 6)],
+            "beats_random": bool(selective < lo),
+            "classifier_auc": round(float(roc_auc_score(y_te, p)), 4),
+            "control_auc": ctrl_auc,
+            "control_auc_ci": [round(float(caucs[12]), 4), round(float(caucs[487]), 4)],
+            "control_null": bool(caucs[487] > 0.45 and caucs[12] < 0.55),
+            "summary": (f"sealed: full {r.mae:.6f}, selective@{coverage:.0%} {selective:.6f}, "
+                        f"random {rand.mean():.6f}"),
+        }
 
     def _sealed_comparison(self, claim: dict) -> dict:
         """Re-run both configs at full precision on the sealed test set."""
