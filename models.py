@@ -90,11 +90,35 @@ def _env():
     return _CACHE["env"]
 
 
+class SplitIntegrityError(RuntimeError):
+    pass
+
+
 def _split(name: str) -> dict:
+    """Load a split, refusing it if its contents no longer match the manifest.
+
+    A claim is tied to a partition by hash. If a split file can drift without
+    anyone noticing, every downstream number is unfalsifiable -- so a mismatch
+    is a hard failure, not a warning.
+    """
     key = f"split:{name}"
     if key not in _CACHE:
+        import hashlib
+        import json
+
         z = np.load(DERIVED / f"split_{name}.npz")
-        _CACHE[key] = {k: z[k] for k in ("train", "validation", "sealed_test")}
+        parts = {k: z[k] for k in ("train", "validation", "sealed_test")}
+        expected = json.loads((DERIVED / "manifest.json").read_text())["splits"][name]
+        for part, arr in parts.items():
+            got = hashlib.sha256(np.ascontiguousarray(arr).tobytes()).hexdigest()
+            if got != expected[part]["sha256"]:
+                raise SplitIntegrityError(
+                    f"split {name!r} partition {part!r} does not match the manifest\n"
+                    f"  expected {expected[part]['sha256'][:16]}\n"
+                    f"  got      {got[:16]}\n"
+                    f"Rebuild with `python world/build.py --seed 0` or restore the file."
+                )
+        _CACHE[key] = parts
     return _CACHE[key]
 
 

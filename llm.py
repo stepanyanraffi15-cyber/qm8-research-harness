@@ -38,10 +38,18 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 
 PROFILES = {
+    # Fully local, no GPU box and no network egress. Ollama speaks the same
+    # OpenAI-compatible dialect, so this is a config change, not a code change.
+    "ollama": {"base_url": "http://localhost:11434/v1", "model": "qwen3:8b"},
     "vllm": {"base_url": "http://localhost:8000/v1", "model": "Qwen/Qwen3.6-35B-A3B-FP8"},
     "openrouter": {"base_url": "https://openrouter.ai/api/v1", "model": "qwen/qwen3.6-35b-a3b"},
     "mock": {"base_url": "", "model": "mock"},
 }
+
+# Profiles that accept vLLM's chat_template_kwargs for turning thinking off.
+# Ollama rejects unknown extra_body, and Qwen3 there is steered with /no_think
+# in the system prompt instead. Same intent, different dialect.
+_SUPPORTS_TEMPLATE_KWARGS = {"vllm", "openrouter"}
 
 
 def load_env(path: Path | None = None) -> None:
@@ -176,7 +184,11 @@ class LLM:
             kwargs["temperature"] = self.temperature
         kwargs[self._token_param] = self.max_tokens
         if not self.thinking:
-            kwargs["extra_body"] = {"chat_template_kwargs": {"enable_thinking": False}}
+            if self.profile in _SUPPORTS_TEMPLATE_KWARGS:
+                kwargs["extra_body"] = {"chat_template_kwargs": {"enable_thinking": False}}
+            else:
+                messages = _no_think(messages)
+                kwargs["messages"] = messages
 
         resp = self._client.chat.completions.create(**kwargs)
         if resp.usage:
@@ -203,6 +215,22 @@ class LLM:
             self._send_temperature = False
             return True
         return False
+
+
+def _no_think(messages: list[dict]) -> list[dict]:
+    """Qwen3's /no_think switch, for endpoints that don't take chat_template_kwargs.
+
+    Appended to the system message rather than the user turn so it survives the
+    whole trajectory instead of only the first step.
+    """
+    out = [dict(m) for m in messages]
+    for m in out:
+        if m.get("role") == "system":
+            if "/no_think" not in str(m.get("content") or ""):
+                m["content"] = f"{m.get('content') or ''}\n\n/no_think"
+            return out
+    out.insert(0, {"role": "system", "content": "/no_think"})
+    return out
 
 
 def _is_transient(error_text: str) -> bool:
