@@ -207,6 +207,36 @@ validation results, which is the adaptive selection the whole scheme guards agai
 
 ---
 
+### 2026-09-08 · citations checked against the papers
+
+The shipped write-up turned out to lean on almost nothing external — Ramakrishnan 2015
+(verified by reproducing its own numbers), the Day 4 deck (transcribed from the PDF), and
+two arXiv papers. Both were checked against the actual abstracts rather than against our
+own planning documents:
+
+- **HAL, arXiv:2510.11977** — verified. Title, 21,730 rollouts, 9 models × 9 benchmarks,
+  2.5B tokens released, and *"higher reasoning effort reducing accuracy in the majority of
+  runs"* all match.
+- **ResearchGym, arXiv:2602.15112** — verified. Real paper, and the two things we cite are
+  exact: GPT-5 improved over provided baselines in *1 of 15 evaluations (6.7%)*, and the
+  named failure modes include *impatience, poor time and resource management, overconfidence
+  in weak hypotheses* — which is what we attribute the agent's 4-of-12 early stopping to.
+
+**One flagged discrepancy is now resolved, against us.** The rev-1 planning document claimed
+HAL's abstract overstated its own body, and that the real finding was "in 21 of 36 runs
+higher reasoning effort did not improve accuracy." The abstract says *the majority of runs*,
+and the deck quoted it correctly. The earlier document's correction was itself the error.
+
+Precision fix that came out of this: `llm.py` had HAL's finding as
+"model × scaffold × harness × budget", which is the Day 4 deck's phrasing rather than the
+paper's ("models, scaffolds, and benchmarks"). Corrected and attributed.
+
+The citation-dense material lives in `docs/PLAN.md`, which is a planning artifact rather
+than part of the submission, and is still labelled *course canon* — printed on a slide,
+upstream unverified.
+
+---
+
 ## Open, and honestly unresolved
 
 - Whether the agent beats random search at equal budget is **not yet known**, and the

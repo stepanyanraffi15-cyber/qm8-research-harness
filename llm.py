@@ -13,9 +13,12 @@ Where the model runs is a config change, never a code change:
 
     uv run python llm.py check
 
-Token accounting lives here because cost is a first-class result. An agent's
-score is a property of model x scaffold x harness x budget (HAL, arXiv:2510.11977),
-so a number reported without its cost is half a result.
+Token accounting lives here because cost is a first-class result. HAL
+(arXiv:2510.11977, verified against the paper) reports a three-dimensional
+analysis over models, scaffolds and benchmarks across 21,730 rollouts -- an agent
+score is not a property of the model alone -- so a number reported without its
+cost and its scaffold is half a result. (The four-way "model x scaffold x harness
+x budget" phrasing is the ArmLLM Day 4 deck's, not the paper's.)
 
 `enable_thinking` is off by default, and the scope of that decision matters.
 It is supported for tool-ROUTING steps inside an agent loop -- the Day 4 measurement
