@@ -114,11 +114,28 @@ def main() -> int:
               f"{a['delta_full']:11.5f} {str(a['delta_beats_full_direct_at']):>18s} "
               f"{str(a['plateau_within_10pct_at']):>9s}")
 
-    # h_budget_plateau: does the plateau move under shift?
+    # h_budget_plateau, as pre-registered: the plateau should occur at a LARGER
+    # label count under scaffold shift. "It moved" is not the claim -- direction
+    # is part of it, and reporting only that it moved would repeat exactly the
+    # bug the referee's `direction` check exists to catch.
     pr, ps = (curves["random"]["analysis"]["plateau_within_10pct_at"],
               curves["scaffold"]["analysis"]["plateau_within_10pct_at"])
-    print(f"\nh_budget_plateau: random plateaus at {pr}, scaffold at {ps} -> "
-          f"{'MOVES' if pr != ps else 'curves superimpose'}")
+    fr, fs = (int(pr) if pr and pr != "all" else 10**9,
+              int(ps) if ps and ps != "all" else 10**9)
+    if fr == fs:
+        verdict, why = "FALSIFIED", "the curves plateau at the same label count"
+    elif fs > fr:
+        verdict, why = "SUPPORTED", f"scaffold needs {fs} labels against random's {fr}"
+    else:
+        verdict, why = ("FALSIFIED",
+                        f"the effect runs BACKWARDS: scaffold plateaus EARLIER "
+                        f"({fs}) than random ({fr}), the opposite of the registered "
+                        f"prediction")
+    print(f"\nh_budget_plateau [pre-registered]: {verdict}")
+    print(f"  registered: plateau occurs at a LARGER label count under scaffold shift")
+    print(f"  observed  : {why}")
+    curves["h_budget_plateau"] = {"verdict": verdict, "detail": why,
+                                  "plateau_random": pr, "plateau_scaffold": ps}
 
     (ROOT / "results" / "label_budget.json").write_text(json.dumps(curves, indent=2) + "\n")
     print(f"wrote {ROOT / 'results' / 'label_budget.json'}")

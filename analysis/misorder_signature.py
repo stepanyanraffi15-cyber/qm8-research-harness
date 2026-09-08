@@ -153,3 +153,42 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
+# --------------------------------------------------------------------------
+# The deliverable this was always for: a risk-coverage curve.
+# --------------------------------------------------------------------------
+#
+# "abstention: on/off" returns one number and cannot express the finding. The
+# object of interest is error against coverage across every rejection threshold,
+# and its only honest baseline is RANDOM rejection at matched coverage -- a model
+# that looks good discarding 30% of molecules has proven nothing until it beats
+# throwing 30% away at random.
+
+
+def risk_coverage(p: np.ndarray, n_boot: int = 2000) -> dict:
+    r = models.run(target=TARGET, method="delta", cheap_level=CHEAP_LEVEL, split=SPLIT,
+                   speed="full", eval_on="validation", return_errors=True)
+    err = r.errors
+    order = np.argsort(p)          # keep the lowest-risk molecules first
+    rng = np.random.default_rng(0)
+
+    rows = []
+    for cov in (1.0, 0.9, 0.8, 0.7, 0.6, 0.5):
+        k = max(1, int(round(cov * len(err))))
+        selective = float(err[order[:k]].mean())
+        # random rejection at the SAME coverage, bootstrapped
+        rand = np.sort([float(err[rng.choice(len(err), k, replace=False)].mean())
+                        for _ in range(n_boot)])
+        rows.append({
+            "coverage": cov,
+            "n_kept": k,
+            "selective_mae": round(selective, 6),
+            "random_mae": round(float(rand.mean()), 6),
+            "random_ci95": [round(float(rand[int(.025 * n_boot)]), 6),
+                            round(float(rand[int(.975 * n_boot)]), 6)],
+            "beats_random": bool(selective < rand[int(.025 * n_boot)]),
+        })
+    aurc = float(np.mean([x["selective_mae"] for x in rows]))
+    return {"rows": rows, "aurc": round(aurc, 6),
+            "beats_random_everywhere": all(x["beats_random"] for x in rows if x["coverage"] < 1.0)}

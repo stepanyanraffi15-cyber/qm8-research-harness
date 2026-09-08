@@ -1,0 +1,73 @@
+{
+  "hypothesis": "h_misorder_signature",
+  "registered_before_measurement": true,
+  "classifier": {
+    "tag": "misordered",
+    "prevalence_train": 0.1628,
+    "prevalence_val": 0.1648,
+    "auc": 0.6933,
+    "auc_ci95": [
+      0.6636,
+      0.7231
+    ]
+  },
+  "control": {
+    "tag": "random_reindex_control",
+    "prevalence_train": 0.1628,
+    "prevalence_val": 0.1648,
+    "auc": 0.4991,
+    "auc_ci95": [
+      0.4658,
+      0.531
+    ]
+  },
+  "structure_predictable": true,
+  "error_by_risk": {
+    "overall_mae": 0.012442,
+    "bins": [
+      {
+        "bin": 0,
+        "n": 545,
+        "risk_range": [
+          0.0068,
+          0.0765
+        ],
+        "mae": 0.005539
+      },
+      {
+        "bin": 1,
+        "n": 544,
+        "risk_range": [
+          0.0765,
+          0.1419
+        ],
+        "mae": 0.011564
+      },
+      {
+        "bin": 2,
+        "n": 545,
+        "risk_range": [
+          0.1419,
+          0.2137
+        ],
+        "mae": 0.01318
+      },
+      {
+        "bin": 3,
+        "n": 545,
+        "risk_range": [
+          0.2137,
+          0.8043
+        ],
+        "mae": 0.019485
+      }
+    ],
+    "ratio_highest_over_lowest": 3.518,
+    "ratio_ci95": [
+      2.845,
+      4.322
+    ],
+    "separates": true
+  },
+  "verdict": "SUPPORTED"
+}
