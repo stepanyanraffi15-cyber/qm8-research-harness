@@ -1,0 +1,381 @@
+[
+ {
+  "seed": 0,
+  "claim_id": "agent_seed0",
+  "verdict": "narrowed",
+  "kind": "exploratory",
+  "reasons": [
+   "overscoped: claims target='E2' but ran ['E1']"
+  ],
+  "checks": {
+   "split_hash": {
+    "passed": true,
+    "detail": "split random hash e7edcaba59fa"
+   },
+   "evidence_resolves": {
+    "passed": true,
+    "detail": "1 evidence ids resolve"
+   },
+   "scope": {
+    "passed": false,
+    "detail": "claims target='E2' but ran ['E1']",
+    "observed": {
+     "target": "E1",
+     "split": "random",
+     "cheap_level": "PBE0-SVP"
+    }
+   },
+   "control": {
+    "passed": true,
+    "detail": "not a mechanistic claim"
+   },
+   "configs_present": {
+    "passed": true,
+    "detail": "both configs present"
+   },
+   "comparisons_in_family": {
+    "passed": true,
+    "detail": "2 runs"
+   },
+   "sealed_rerun": {
+    "passed": true,
+    "detail": "sealed MAE a=0.37599 b=0.20912 (diff +0.16687)"
+   },
+   "noise_floor": {
+    "passed": true,
+    "detail": "paired bootstrap CI [0.153722, 0.180911] on 2178 molecules"
+   },
+   "val_to_test_gap": {
+    "passed": true,
+    "detail": "val->test gap a=+0.00457 b=+0.00294"
+   },
+   "direction": {
+    "passed": true,
+    "detail": "claim says E2/direct/PBE0-SVP beats E2/cheap/PBE0-SVP; measured 0.20912 vs 0.37599"
+   },
+   "_p_value": 0.0
+  },
+  "narrowed_statement": "The direct method predicts excited-state energies with 24% less error than the cheap TDDFT approximation on the random split \u2014 for target=E1, split=random, cheap_level=PBE0-SVP only."
+ },
+ {
+  "seed": 1,
+  "claim_id": "agent_seed1",
+  "verdict": "rejected",
+  "kind": "exploratory",
+  "reasons": [
+   "wrong_direction: the effect is real but runs the other way -- f1/cheap beats f1/direct by 0.00417"
+  ],
+  "checks": {
+   "split_hash": {
+    "passed": true,
+    "detail": "split random hash e7edcaba59fa"
+   },
+   "evidence_resolves": {
+    "passed": true,
+    "detail": "2 evidence ids resolve"
+   },
+   "scope": {
+    "passed": true,
+    "detail": "quantifier matches the configs run"
+   },
+   "control": {
+    "passed": true,
+    "detail": "not a mechanistic claim"
+   },
+   "configs_present": {
+    "passed": true,
+    "detail": "both configs present"
+   },
+   "comparisons_in_family": {
+    "passed": true,
+    "detail": "3 runs"
+   },
+   "sealed_rerun": {
+    "passed": true,
+    "detail": "sealed MAE a=0.01196 b=0.01613 (diff -0.00417)"
+   },
+   "noise_floor": {
+    "passed": true,
+    "detail": "paired bootstrap CI [-0.005524, -0.002794] on 2178 molecules"
+   },
+   "val_to_test_gap": {
+    "passed": true,
+    "detail": "val->test gap a=+0.00127 b=+0.00052"
+   },
+   "direction": {
+    "passed": false,
+    "detail": "claim says f1/direct beats f1/cheap; measured 0.01613 vs 0.01196"
+   },
+   "_p_value": 0.0
+  }
+ },
+ {
+  "seed": 2,
+  "claim_id": "agent_seed2",
+  "verdict": "signed",
+  "kind": "exploratory",
+  "reasons": [],
+  "checks": {
+   "split_hash": {
+    "passed": true,
+    "detail": "split random hash e7edcaba59fa"
+   },
+   "evidence_resolves": {
+    "passed": true,
+    "detail": "3 evidence ids resolve"
+   },
+   "scope": {
+    "passed": true,
+    "detail": "quantifier matches the configs run"
+   },
+   "control": {
+    "passed": true,
+    "detail": "not a mechanistic claim"
+   },
+   "configs_present": {
+    "passed": true,
+    "detail": "both configs present"
+   },
+   "comparisons_in_family": {
+    "passed": true,
+    "detail": "4 runs"
+   },
+   "sealed_rerun": {
+    "passed": true,
+    "detail": "sealed MAE a=0.01613 b=0.01232 (diff +0.00380)"
+   },
+   "noise_floor": {
+    "passed": true,
+    "detail": "paired bootstrap CI [0.002665, 0.004942] on 2178 molecules"
+   },
+   "val_to_test_gap": {
+    "passed": true,
+    "detail": "val->test gap a=+0.00052 b=+0.00144"
+   },
+   "direction": {
+    "passed": true,
+    "detail": "claim says f1/delta/CAM beats f1/direct/CAM; measured 0.01232 vs 0.01613"
+   },
+   "_p_value": 0.0
+  }
+ },
+ {
+  "seed": 3,
+  "claim_id": "agent_seed3",
+  "verdict": "rejected",
+  "kind": "exploratory",
+  "reasons": [
+   "unsupported_claim: claim names no split"
+  ],
+  "checks": {
+   "split_hash": {
+    "passed": false,
+    "detail": "claim names no split"
+   },
+   "evidence_resolves": {
+    "passed": true,
+    "detail": "1 evidence ids resolve"
+   },
+   "scope": {
+    "passed": true,
+    "detail": "quantifier matches the configs run"
+   },
+   "control": {
+    "passed": true,
+    "detail": "not a mechanistic claim"
+   },
+   "configs_present": {
+    "passed": true,
+    "detail": "both configs present"
+   },
+   "comparisons_in_family": {
+    "passed": true,
+    "detail": "2 runs"
+   }
+  }
+ },
+ {
+  "seed": 4,
+  "claim_id": "agent_seed4",
+  "verdict": "rejected",
+  "kind": "exploratory",
+  "reasons": [
+   "overscoped: claims target='f1' but ran ['f1', 'f2']",
+   "unsupported_claim: comparison claim missing config_a, config_b"
+  ],
+  "checks": {
+   "split_hash": {
+    "passed": true,
+    "detail": "split random hash e7edcaba59fa"
+   },
+   "evidence_resolves": {
+    "passed": true,
+    "detail": "2 evidence ids resolve"
+   },
+   "scope": {
+    "passed": false,
+    "detail": "claims target='f1' but ran ['f1', 'f2']"
+   },
+   "control": {
+    "passed": true,
+    "detail": "not a mechanistic claim"
+   },
+   "configs_present": {
+    "passed": false,
+    "detail": "comparison claim missing config_a, config_b"
+   },
+   "comparisons_in_family": {
+    "passed": true,
+    "detail": "8 runs"
+   }
+  }
+ },
+ {
+  "seed": 5,
+  "claim_id": "agent_seed5",
+  "verdict": "rejected",
+  "kind": "exploratory",
+  "reasons": [
+   "wrong_direction: the effect is real but runs the other way -- f1/cheap/CAM beats f1/direct/CAM by 0.00540"
+  ],
+  "checks": {
+   "split_hash": {
+    "passed": true,
+    "detail": "split random hash e7edcaba59fa"
+   },
+   "evidence_resolves": {
+    "passed": true,
+    "detail": "1 evidence ids resolve"
+   },
+   "scope": {
+    "passed": true,
+    "detail": "quantifier matches the configs run"
+   },
+   "control": {
+    "passed": true,
+    "detail": "not a mechanistic claim"
+   },
+   "configs_present": {
+    "passed": true,
+    "detail": "both configs present"
+   },
+   "comparisons_in_family": {
+    "passed": true,
+    "detail": "4 runs"
+   },
+   "sealed_rerun": {
+    "passed": true,
+    "detail": "sealed MAE a=0.01073 b=0.01613 (diff -0.00540)"
+   },
+   "noise_floor": {
+    "passed": true,
+    "detail": "paired bootstrap CI [-0.006711, -0.004057] on 2178 molecules"
+   },
+   "val_to_test_gap": {
+    "passed": true,
+    "detail": "val->test gap a=+0.00167 b=+0.00052"
+   },
+   "direction": {
+    "passed": false,
+    "detail": "claim says f1/direct/CAM beats f1/cheap/CAM; measured 0.01613 vs 0.01073"
+   },
+   "_p_value": 0.0
+  }
+ },
+ {
+  "seed": 6,
+  "claim_id": "agent_seed6",
+  "verdict": "narrowed",
+  "kind": "exploratory",
+  "reasons": [
+   "overscoped: claims target='E1' but ran ['E1', 'f1']"
+  ],
+  "checks": {
+   "split_hash": {
+    "passed": true,
+    "detail": "split random hash e7edcaba59fa"
+   },
+   "evidence_resolves": {
+    "passed": true,
+    "detail": "4 evidence ids resolve"
+   },
+   "scope": {
+    "passed": false,
+    "detail": "claims target='E1' but ran ['E1', 'f1']",
+    "observed": {
+     "target": [
+      "E1",
+      "f1"
+     ],
+     "split": "random",
+     "cheap_level": "CAM"
+    }
+   },
+   "control": {
+    "passed": true,
+    "detail": "not a mechanistic claim"
+   },
+   "configs_present": {
+    "passed": true,
+    "detail": "both configs present"
+   },
+   "comparisons_in_family": {
+    "passed": true,
+    "detail": "4 runs"
+   },
+   "sealed_rerun": {
+    "passed": true,
+    "detail": "sealed MAE a=0.19251 b=0.06150 (diff +0.13100)"
+   },
+   "noise_floor": {
+    "passed": true,
+    "detail": "paired bootstrap CI [0.123068, 0.139022] on 2178 molecules"
+   },
+   "val_to_test_gap": {
+    "passed": true,
+    "detail": "val->test gap a=-0.00030 b=+0.00211"
+   },
+   "direction": {
+    "passed": true,
+    "detail": "claim says E1/delta/CAM beats E1/direct/CAM; measured 0.06150 vs 0.19251"
+   },
+   "_p_value": 0.0
+  },
+  "narrowed_statement": "Predicting excited-state energies with delta (CC2 - TDDFT + TDDFT) is more accurate than direct prediction from structure, with a 0.165 eV reduction in MAE \u2014 for target=['E1', 'f1'], split=random, cheap_level=CAM only."
+ },
+ {
+  "seed": 7,
+  "claim_id": "agent_seed7",
+  "verdict": "rejected",
+  "kind": "exploratory",
+  "reasons": [
+   "unsupported_claim: claim names no split"
+  ],
+  "checks": {
+   "split_hash": {
+    "passed": false,
+    "detail": "claim names no split"
+   },
+   "evidence_resolves": {
+    "passed": true,
+    "detail": "4 evidence ids resolve"
+   },
+   "scope": {
+    "passed": true,
+    "detail": "quantifier matches the configs run"
+   },
+   "control": {
+    "passed": true,
+    "detail": "not a mechanistic claim"
+   },
+   "configs_present": {
+    "passed": true,
+    "detail": "both configs present"
+   },
+   "comparisons_in_family": {
+    "passed": true,
+    "detail": "1 runs"
+   }
+  }
+ }
+]

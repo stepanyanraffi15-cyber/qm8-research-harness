@@ -58,7 +58,7 @@ without an audit token that nothing importable from `tools.py` holds.
 | C | **Δ-learning's real value is robustness, not accuracy** — under scaffold shift direct learning is worse than doing nothing; Δ is not. | measured |
 | D | **MoleculeNet's `qm8.csv` ships 12 tasks under 16 headers.** One level of theory is a verbatim duplicate. | verified upstream |
 | E | **Fixing the state labelling does not rescue Δ-learning for oscillator strengths.** The 2015 negative result survives its own proposed remedy. | measured, CI includes zero |
-| F | **The agent loses to a 12-line schedule on search, but 2 of its 3 claims survived the referee.** | 3 seeds, 8B model |
+| F | **The agent loses to a 12-line schedule on search, and only 1 of 8 claims survives the referee** — 2 were exactly backwards. | 8 seeds, 8B model |
 | G | `h_budget_plateau` — the plateau moves *backwards* from the registered prediction. | **pre-registered, falsified** |
 | H | Δ beats cheap for f1 on the gap split. | **withdrawn — noise** |
 
@@ -252,25 +252,43 @@ it is a model finding — the tool schema lists all four methods with descriptio
 agent fixates on the second one anyway. It is also the most actionable result here: an
 agent that reaches `delta` finds the answer almost immediately.
 
-### 8. But two thirds of its claims survived the referee
+### 8. What the referee does to eight agent claims
 
-Search efficiency is not the only thing worth measuring, and it is not the thing the brief
-asked about. Putting each seed's claim to the referee — re-scored at full precision on a
-sealed test set the agent never saw:
+Search efficiency is not the only thing worth measuring, and it is not what the brief asked
+about. Every seed's claim was put to the referee — re-scored at full precision on a sealed
+test set the agent never saw.
 
-| seed | claim | verdict | measured |
-|---|---|---|---|
-| 0 | direct beats cheap for E2 | **signed** | 0.209 vs 0.376 |
-| 1 | direct beats cheap for f1 | **rejected** | 0.0161 vs 0.0120 — backwards, and over-scoped |
-| 2 | delta beats direct for f1 | **signed** | 0.0123 vs 0.0161 |
+```
+VERDICTS           signed 1 · narrowed 2 · rejected 5
+FAILURE HISTOGRAM  overscoped 3 · unsupported_claim 3 · wrong_direction 2
+```
 
-**Signed 2, rejected 1.** The agent produces a mixture of true and false findings, and a
-deterministic referee separates them. Seed 1 failed on two independent grounds: its claim
-pointed the wrong way, and it quantified over a split it had not exclusively run.
+| seed | verdict | why |
+|---:|---|---|
+| 0 | narrowed | claims `E2`, ran `E1` |
+| 1 | rejected | **wrong direction** — cheap beats direct by 0.0042 |
+| 2 | **signed** | delta beats direct for f1 |
+| 3 | rejected | names no split |
+| 4 | rejected | over-scoped, and `config_a`/`config_b` missing entirely |
+| 5 | rejected | **wrong direction** — cheap beats direct |
+| 6 | narrowed | claims `E1`, ran `E1` and `f1` |
+| 7 | rejected | names no split |
 
-That mixture is the honest answer to "can a team of agents do research on QM8": *it can
-generate findings, it cannot be trusted to grade them, and the grading is separable and
-cheap.* Which is the entire argument for building the referee first.
+**One claim in eight survives intact.** Two are exactly backwards: the agent asserted a
+direction the sealed data contradicts. Without the `direction` check — which exists only
+because an earlier rollout produced such a claim and an earlier version of the referee
+signed it — those two would have passed. A single late-added check catches a quarter of
+this agent's output.
+
+Three seeds earlier reported 2 signed and 1 rejected, which was luck. Eight seeds give 1 in
+8. That is the same small-sample trap this project keeps catching in its own work, and it
+is the reason the referee reports a histogram rather than a pass rate: *"'62%' tells you
+nothing. A histogram of failures tells you what to fix."*
+
+The honest answer to "can a team of agents do research on QM8" is therefore narrow and
+specific. **It can generate findings; it cannot be trusted to grade them; and the grading
+is separable, cheap and mechanical.** Which is the whole argument for building the referee
+first.
 
 ### 9. The referee's own bug, found by a real agent
 
@@ -281,8 +299,18 @@ It does not establish that the difference runs the way the claim says. `config_b
 construction the config a claim asserts is better, so the paired difference must be
 positive — and nothing was testing that.
 
-Check 5, `direction`, now does. The mock agent could never have surfaced this: it only ever
-over-claims, never inverts. It took a real model making a real mistake.
+Check 5, `direction`, now does — and across eight seeds it rejects **two of eight** claims,
+so a check added late in response to one accident turns out to catch a quarter of this
+agent's output.
+
+The mock agent could never have surfaced it: the mock only ever over-claims, never inverts.
+It took a real model making a real mistake.
+
+A second robustness bug surfaced the same way. Seed 4 emitted `kind: "comparison"` with a
+null `config_b`, and the referee raised a `TypeError` that killed the entire audit run. A
+malformed claim must produce a *verdict*, not a traceback — the referee has to be at least
+as robust as the loop it grades, where errors are already observations rather than
+exceptions. Both bugs were found by running eight rollouts, not by reading the code.
 
 ### 10. How few expensive labels? 174× fewer.
 
