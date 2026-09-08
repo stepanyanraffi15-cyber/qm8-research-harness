@@ -159,6 +159,54 @@ the second half of the invariant.
 
 ---
 
+### 2026-09-08 · the flagship claim, finally run
+
+`intervene(reindex_states)` had existed since the tool layer was written and had never
+been used. The state-ordering analysis — the most novel thing in the project — was
+regenerated properly, with the control the 2015 conjecture needs.
+
+It reproduces. Swap rates match the prior claims **exactly**: 16.4% / 12.1% / 11.8% for
+PBE0-SVP / PBE0-TZVP / CAM. The control is clean — 0.0% swap rate and 0.00% gain on
+energies, which are sorted by construction, so this is not an artifact of reshuffling two
+correlated columns.
+
+Three corrections to how it had been described:
+
+1. **The gap-when-swapped is 0.50 eV, not 0.30.** The prior documents claimed 0.30 against
+   0.81 for the rest. We get 0.50 against 0.84. The mechanism holds directionally —
+   ambiguity concentrates in near-degenerate states — but that figure does not reproduce.
+2. **Brightness-ordering IS the oracle, not a step toward it.** It equals the oracle gain
+   exactly in all three rows, which follows from the rearrangement inequality: for two
+   elements, sorting both sides by the same key minimises the sum of absolute differences.
+   So ~20% is a ceiling. And it is a **task redefinition** — predict the bright transition
+   and the dark one rather than the lower-energy and the higher — not a model improvement.
+   Reporting "20% error reduction" without that sentence would be dishonest.
+3. **Fixing the label does NOT rescue delta-learning.** This is the test that actually
+   matters and nobody had run it. In brightness-ordered space, cheap 0.02507 vs delta
+   0.02503, paired CI [-0.001239, +0.001391] — indistinguishable. So the 2015 negative
+   result is not a labelling artifact; it survives the fix. That is a sharper statement of
+   it than the original paper made.
+
+`h_reindex_by_cheap_level` comes out **partially falsified**: swap rate falls with baseline
+quality exactly as predicted (16.4 > 12.1 > 11.8), but oracle gain does not (19.7, 14.8,
+20.8). The mechanism governs how *often* states are misordered, not how much it costs.
+
+### 2026-09-08 · pre-registration, honestly
+
+`preregister.json` had been a test fixture the whole time, so every real agent claim was
+scored exploratory and the confirmatory path was never exercised.
+
+Writing the real one raised the obvious temptation: register everything already measured
+and call it confirmatory. That is backdating, and it is precisely what pre-registration
+exists to prevent. So only two genuinely untested claims are registered —
+`h_budget_plateau` and `h_misorder_signature` — and four others are listed under
+`exploratory_by_construction` with the reason each cannot count.
+
+Agent claims are exploratory by definition: the agent chooses what to claim after seeing
+validation results, which is the adaptive selection the whole scheme guards against.
+
+---
+
 ## Open, and honestly unresolved
 
 - Whether the agent beats random search at equal budget is **not yet known**, and the

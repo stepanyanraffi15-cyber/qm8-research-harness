@@ -1,13 +1,53 @@
 {
- "registered_at": "2026-09-07T21:00:00Z",
- "claims": [
-  {
-   "id": "c_delta_beats_direct",
-   "primary_outcome": "MAE(E1,random)"
-  },
-  {
-   "id": "c_svp_beats_tzvp",
-   "primary_outcome": "MAE(E1,random)"
+  "registered_at": "2026-09-08T14:40:00Z",
+  "note": "Pre-registration only means something if it predates the measurement. Several hypotheses in hypotheses.jsonl were already observed during the build, so registering them now would be backdating, and they are listed under `exploratory_by_construction` instead. Only genuinely untested claims are registered as confirmatory. The referee reads the `claims` list; everything else here is documentation for a reader.",
+
+  "claims": [
+    {
+      "id": "h_budget_plateau",
+      "statement": "The CC2 label-budget plateau for delta-learning on E1 occurs at a LARGER number of labels under scaffold shift than under a random split.",
+      "primary_outcome": "smallest n_train whose validation MAE is within 10% of the fully-trained delta MAE, compared between the random and scaffold splits",
+      "mechanism": "If delta-learning fits a smooth local correction to the cheap surface, a shifted test distribution should need materially more labels to reach the same error.",
+      "falsified_if": "The two curves plateau at the same label count, which would mean the correction is more global than assumed -- a claim about the physics rather than the model.",
+      "registered_before_measurement": true
+    },
+    {
+      "id": "h_misorder_signature",
+      "statement": "Molecules whose excited states are misordered between TDDFT and CC2 are separable from the rest using structure-derived features alone.",
+      "primary_outcome": "ratio of delta-model MAE between the highest and lowest quartile of a structure-only predictor of misordering, with a paired bootstrap interval",
+      "mechanism": "Ordering ambiguity concentrates in near-degenerate states, and near-degeneracy has structural correlates a fingerprint can represent.",
+      "falsified_if": "No structure-only slice separates the swapped population beyond the paired bootstrap interval.",
+      "control_required": "random_reindex",
+      "registered_before_measurement": true
+    }
+  ],
+
+  "exploratory_by_construction": [
+    {
+      "id": "h_cheap_level",
+      "why": "Measured (0.0630 vs 0.0721 eV, CI [-0.011,-0.007]) before any registration existed. The result stands; its status does not.",
+      "status": "signed, but reported as exploratory"
+    },
+    {
+      "id": "h_gap_error",
+      "why": "Observed during the build via slice_error, then re-measured on the sealed set (2.26x, CI [1.97,2.59]). Registering it now would be backdating.",
+      "status": "measured, reported as exploratory"
+    },
+    {
+      "id": "h_reindex_by_cheap_level",
+      "why": "The three cheap levels were swept during the state-ordering analysis before this file existed.",
+      "status": "partially falsified -- swap RATE falls with baseline quality (16.4% SVP > 12.1% TZVP > 11.8% CAM) exactly as predicted, but oracle GAIN does not (19.7%, 14.8%, 20.8%). The mechanism holds for how often states are misordered; it does not hold for how much that costs."
+    },
+    {
+      "id": "h_f_on_gap_split",
+      "why": "Falsified on 2026-09-08. Paired bootstrap CI [-0.000463, +0.001328] includes zero.",
+      "status": "FALSIFIED and withdrawn from the write-up"
+    }
+  ],
+
+  "agent_claims": {
+    "note": "Claims produced by agent rollouts are exploratory by definition -- the agent chooses what to claim after seeing validation results, which is the adaptive selection pre-registration exists to prevent. They are audited on the sealed set and reported with their multiplicity, never as confirmatory.",
+    "audited": ["agent_seed0", "agent_seed1", "agent_seed2"],
+    "outcome": "2 signed, 1 rejected (wrong_direction and overscoped)"
   }
- ]
 }
