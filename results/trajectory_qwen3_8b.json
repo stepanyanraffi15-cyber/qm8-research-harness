@@ -1,0 +1,23 @@
+{
+  "question": "How few expensive CC2 labels are needed to predict excited-state properties, and where does the prediction break?",
+  "claim": null,
+  "stopped_because": "no_tool_call",
+  "n_steps": 1,
+  "usage": {
+    "prompt_tokens": 3727,
+    "completion_tokens": 1669,
+    "total_tokens": 5396,
+    "calls": 2,
+    "retries": 0
+  },
+  "experiment_ids": [],
+  "trajectory": [
+    {
+      "step": 1,
+      "tool": "describe_dataset",
+      "args": {},
+      "observation": "{\n \"molecules\": 21786,\n \"targets\": [\n  \"E1-CC2\",\n  \"E2-CC2\",\n  \"f1-CC2\",\n  \"f2-CC2\",\n  \"E1-PBE0-SVP\",\n  \"E2-PBE0-SVP\",\n  \"f1-PBE0-SVP\",\n  \"f2-PBE0-SVP\",\n  \"E1-PBE0-TZVP\",\n  \"E2-PBE0-TZVP\",\n  \"f1-PBE0-TZVP\",\n  \"f2-PBE0-TZVP\",\n  \"E1-CAM\",\n  \"E2-CAM\",\n  \"f1-CAM\",\n  \"f2-CAM\"\n ],\n \"units\": {\n  \"energies\": \"eV (converted from hartree)\",\n  \"oscillator_strengths\": \"a.u.\"\n },\n \"levels_of_theory\": {\n  \"reference\": \"RI-CC2/def2TZVP (expensive)\",\n  \"cheap\": [\n   \"PBE0/def2SVP\",\n   \"PBE0/def2TZVP\",\n   \"CAM-B3LYP/def2TZVP\"\n  ]\n },\n \"splits\": {\n  \"random\": {\n   \"train\": 17429,\n   \"validation\": 2179,\n   \"seal",
+      "tokens_after": 2182
+    }
+  ]
+}

@@ -179,6 +179,8 @@ class LLM:
         raise LLMError(f"{self.describe()} failed after retries: {last_error}") from last_error
 
     def _once(self, messages: list[dict], tools: list[dict] | None) -> dict:
+        if self.profile == "ollama" and not self.thinking:
+            return self._once_ollama_native(messages, tools)
         kwargs: dict = {"model": self.model, "messages": messages}
         if tools:
             kwargs["tools"] = tools
@@ -205,6 +207,65 @@ class LLM:
                 for tc in (msg.tool_calls or [])
             ] or None,
         }
+
+    def _once_ollama_native(self, messages: list[dict], tools: list[dict] | None) -> dict:
+        """Ollama's own /api/chat, because the OpenAI shim cannot turn thinking off.
+
+        Measured on qwen3:8b, "Say hi in 3 words":
+
+            OpenAI-compatible, think=False in extra_body   300 tokens, no answer
+            OpenAI-compatible, reasoning_effort=low        300 tokens, no answer
+            OpenAI-compatible, 2000-token budget          2000 tokens, no answer
+            native /api/chat, "think": false                  4 tokens, "Hello there!"
+
+        The model reasons unboundedly through the shim and never reaches an
+        answer; `think` is simply not a parameter the compat layer forwards. This
+        is the same effect Day 4 measured on vLLM (333 completion tokens per call
+        falling to 40 with enable_thinking=false) showing up on a different stack,
+        and it is a harness property rather than a model property -- which is
+        exactly the kind of thing HAL says to report rather than bury.
+        """
+        import urllib.error
+        import urllib.request
+
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "think": False,
+            "stream": False,
+            "options": {"temperature": self.temperature, "num_predict": self.max_tokens},
+        }
+        if tools:
+            payload["tools"] = tools
+
+        base = self.base_url.rsplit("/v1", 1)[0]
+        req = urllib.request.Request(
+            f"{base}/api/chat",
+            data=json.dumps(payload).encode(),
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=300) as resp:
+            body = json.loads(resp.read())
+
+        self.usage.add(body.get("prompt_eval_count", 0) or 0, body.get("eval_count", 0) or 0)
+        msg = body.get("message", {})
+
+        # Ollama returns tool arguments as an object; the OpenAI shape the agent
+        # loop expects is a JSON string. Normalise here so nothing downstream
+        # has to know which backend it is talking to.
+        calls = []
+        for i, tc in enumerate(msg.get("tool_calls") or []):
+            fn = tc.get("function", {})
+            args = fn.get("arguments", {})
+            calls.append({
+                "id": tc.get("id") or f"call_{i}",
+                "type": "function",
+                "function": {
+                    "name": fn.get("name", ""),
+                    "arguments": args if isinstance(args, str) else json.dumps(args),
+                },
+            })
+        return {"role": "assistant", "content": msg.get("content"), "tool_calls": calls or None}
 
     def _adapt(self, error_text: str) -> bool:
         low = error_text.lower()
