@@ -118,6 +118,23 @@ Bugs found by running things, each of which would have produced a wrong result:
 
 ---
 
+### 2026-09-08 · backend
+
+Constraint set by the author: **everything runs locally.** No YSU GPU, no remote host.
+
+That ruled out the setup the harness was originally written against (Qwen3.6-35B-A3B-FP8
+on an L40S). Nothing on this machine could serve a model — no API keys in the environment,
+and port 8000 turned out to be an unrelated Docker container, not vLLM. So Ollama was
+installed and Qwen3 8B pulled: the closest local analogue, on an Apple Silicon laptop with
+16 GB.
+
+Consequence to state in the write-up rather than bury: the agent arm runs an **8B** model,
+not the 35B/3B-active one the design reasoned about. Any null result from the agent arm is
+therefore confounded with model capacity, and cannot be read as "LLM agents cannot do
+this."
+
+---
+
 ## Open, and honestly unresolved
 
 - Whether the agent beats random search at equal budget is **not yet known**, and the

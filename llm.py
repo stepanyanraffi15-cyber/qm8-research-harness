@@ -141,8 +141,10 @@ class LLM:
             self._client = None
             return
 
+        # Local servers accept any key; only hosted profiles genuinely need one.
+        local_default = "EMPTY" if self.profile in ("vllm", "ollama") else None
         key = api_key or _env("QM8_API_KEY", "ARMLLM_API_KEY", "OPENROUTER_API_KEY",
-                              "OPENAI_API_KEY", default="EMPTY" if self.profile == "vllm" else None)
+                              "OPENAI_API_KEY", default=local_default)
         if not key:
             raise LLMError(
                 f"profile {self.profile!r} needs an API key. Put QM8_API_KEY in "
