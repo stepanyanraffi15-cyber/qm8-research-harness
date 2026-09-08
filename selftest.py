@@ -1,9 +1,12 @@
 """Every check this project claims to pass, runnable in one command.
 
-    uv run python selftest.py
+    uv run python selftest.py            # everything
+    uv run python selftest.py --quick    # harness only, skips the model fits
 
 The point is that a reviewer should not have to take any number in the write-up
-on trust. Each check below either reproduces a published result, proves an
+on trust. The `findings` block re-derives the three headline results from the
+data rather than reading them out of a results file, which would only prove the
+file exists. Each check below either reproduces a published result, proves an
 isolation property, or demonstrates that the referee rejects something it should.
 
 Checks 4 and 5 are the load-bearing ones: they are what make the invariant --
@@ -176,6 +179,63 @@ def t_referee_narrows():
     return v["verdict"] == "narrowed", v.get("narrowed_statement", "")[-95:]
 
 
+@check("state-ordering: swap rate reproduces, and the control is null")
+def t_state_ordering():
+    """The project's most novel claim, plus the control that makes it mean anything.
+
+    Energies are sorted by construction, so swapping them can only hurt. If the
+    energy control ever shows a gain comparable to the oscillator strengths, the
+    oscillator result is an artifact of reshuffling two correlated columns.
+    """
+    sys.path.insert(0, str(ROOT))
+    from analysis.state_ordering import energy_control, swap_analysis
+
+    sw = swap_analysis("PBE0-SVP")
+    ctrl = energy_control("PBE0-SVP")
+    ok = (0.15 < sw["swap_rate"] < 0.18
+          and ctrl["oracle_gain_pct_energies"] == 0.0
+          and sw["mean_cc2_gap_when_swapped"] < sw["mean_cc2_gap_otherwise"])
+    return ok, (
+        f"swap rate {sw['swap_rate']:.1%} (claimed 16.4%), oracle gain "
+        f"{sw['oracle_gain_pct']}%; energy control gain "
+        f"{ctrl['oracle_gain_pct_energies']}% (must be 0); gap "
+        f"{sw['mean_cc2_gap_when_swapped']:.2f} vs {sw['mean_cc2_gap_otherwise']:.2f} eV"
+    )
+
+
+@check("delta-learning on 100 labels beats direct on the full training set")
+def t_label_efficiency():
+    import models
+
+    d100 = models.run(target="E1", method="delta", cheap_level="PBE0-TZVP",
+                      split="random", n_train=100, seed=0, speed="fast").mae
+    full = models.run(target="E1", method="direct", cheap_level="PBE0-TZVP",
+                      split="random", speed="fast")
+    factor = full.n_train / 100
+    return d100 < full.mae, (
+        f"delta@100 {d100:.5f} vs direct@{full.n_train} {full.mae:.5f} "
+        f"-> {factor:.0f}x fewer expensive labels"
+    )
+
+
+@check("abstention beats random rejection at matched coverage")
+def t_abstention():
+    """The strongest finding, checked end to end rather than read from a file."""
+    sys.path.insert(0, str(ROOT))
+    from analysis.misorder_signature import (CHEAP_LEVEL, fit_and_score,
+                                             misordered_labels, risk_coverage)
+
+    real = fit_and_score(misordered_labels(CHEAP_LEVEL), "misordered")
+    rc = risk_coverage(real["probs"], n_boot=500)
+    half = next(r for r in rc["rows"] if r["coverage"] == 0.5)
+    ok = rc["beats_random_everywhere"] and real["auc_ci95"][0] > 0.5
+    return ok, (
+        f"classifier AUC {real['auc']} CI {real['auc_ci95']}; at 50% coverage "
+        f"selective {half['selective_mae']:.5f} vs random {half['random_mae']:.5f} "
+        f"CI {half['random_ci95']}"
+    )
+
+
 @check("the loop runs with no GPU and no network")
 def t_offline_loop():
     import os
@@ -190,10 +250,20 @@ def t_offline_loop():
 
 def main() -> int:
     print("QM8 research harness — selftest\n")
-    for fn in (t_parse, t_duplication, t_alignment, t_reset, t_sealed, t_no_leak,
-               t_split_integrity, t_shuffle_control, t_referee_rejects,
-               t_referee_narrows, t_offline_loop):
+    fast = (t_parse, t_duplication, t_alignment, t_reset, t_sealed, t_no_leak,
+            t_split_integrity, t_shuffle_control, t_referee_rejects,
+            t_referee_narrows, t_offline_loop)
+    findings = (t_state_ordering, t_label_efficiency, t_abstention)
+
+    print("-- harness --")
+    for fn in fast:
         fn()
+    if "--quick" in sys.argv:
+        print("\n-- findings -- (skipped, --quick)")
+    else:
+        print("\n-- findings --")
+        for fn in findings:
+            fn()
 
     failed = [n for n, s, _ in _results if s == FAIL]
     print(f"\n{len(_results) - len(failed)}/{len(_results)} passed")
