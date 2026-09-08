@@ -63,12 +63,24 @@
   ],
   "agent_claims": {
     "note": "Claims produced by agent rollouts are exploratory by definition -- the agent chooses what to claim after seeing validation results, which is the adaptive selection pre-registration exists to prevent. They are audited on the sealed set and reported with their multiplicity, never as confirmatory.",
+    "model": "qwen3:8b (local, Ollama)",
     "audited": [
       "agent_seed0",
       "agent_seed1",
-      "agent_seed2"
+      "agent_seed2",
+      "agent_seed3",
+      "agent_seed4",
+      "agent_seed5",
+      "agent_seed6",
+      "agent_seed7"
     ],
-    "outcome": "2 signed, 1 rejected (wrong_direction and overscoped)"
+    "outcome": "1 signed, 2 narrowed, 5 rejected",
+    "failure_histogram": {
+      "overscoped": 3,
+      "unsupported_claim": 3,
+      "wrong_direction": 2
+    },
+    "superseded": "An earlier 3-seed audit reported 2 signed and 1 rejected. That was luck; 8 seeds give 1 in 8. Recorded because the optimistic number was published first."
   },
   "registered_at_addendum": "2026-09-08T16:20:00Z (h_frontier_explores added)"
 }

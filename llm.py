@@ -45,7 +45,10 @@ PROFILES = {
     # OpenAI-compatible dialect, so this is a config change, not a code change.
     "ollama": {"base_url": "http://localhost:11434/v1", "model": "qwen3:8b"},
     "vllm": {"base_url": "http://localhost:8000/v1", "model": "Qwen/Qwen3.6-35B-A3B-FP8"},
-    "openrouter": {"base_url": "https://openrouter.ai/api/v1", "model": "qwen/qwen3.6-35b-a3b"},
+    "openrouter": {"base_url": "https://openrouter.ai/api/v1", "model": "anthropic/claude-sonnet-5"},
+    # Anthropic's API is not OpenAI-shaped, so this profile goes through an
+    # adapter rather than the shared client. Same interface to the agent loop.
+    "anthropic": {"base_url": "", "model": "claude-sonnet-5"},
     "mock": {"base_url": "", "model": "mock"},
 }
 
@@ -147,12 +150,18 @@ class LLM:
         # Local servers accept any key; only hosted profiles genuinely need one.
         local_default = "EMPTY" if self.profile in ("vllm", "ollama") else None
         key = api_key or _env("QM8_API_KEY", "ARMLLM_API_KEY", "OPENROUTER_API_KEY",
-                              "OPENAI_API_KEY", default=local_default)
+                              "ANTHROPIC_API_KEY", "OPENAI_API_KEY", default=local_default)
         if not key:
             raise LLMError(
                 f"profile {self.profile!r} needs an API key. Put QM8_API_KEY in "
                 f"{HERE / '.env'} (gitignored), or export it. Use QM8_PROFILE=mock to run offline."
             )
+        if self.profile == "anthropic":
+            import anthropic
+
+            self._client = anthropic.Anthropic(api_key=key, timeout=180.0, max_retries=0)
+            return
+
         from openai import OpenAI
 
         self._client = OpenAI(base_url=self.base_url, api_key=key, timeout=180.0, max_retries=0)
@@ -182,6 +191,8 @@ class LLM:
         raise LLMError(f"{self.describe()} failed after retries: {last_error}") from last_error
 
     def _once(self, messages: list[dict], tools: list[dict] | None) -> dict:
+        if self.profile == "anthropic":
+            return self._once_anthropic(messages, tools)
         if self.profile == "ollama" and not self.thinking:
             return self._once_ollama_native(messages, tools)
         kwargs: dict = {"model": self.model, "messages": messages}
@@ -269,6 +280,74 @@ class LLM:
                 },
             })
         return {"role": "assistant", "content": msg.get("content"), "tool_calls": calls or None}
+
+    def _once_anthropic(self, messages: list[dict], tools: list[dict] | None) -> dict:
+        """Anthropic's Messages API, normalised to the shape the agent loop expects.
+
+        Three differences from the OpenAI dialect, all of them load-bearing:
+        the system prompt is a separate parameter rather than a message; tools
+        carry `input_schema` rather than a nested `function.parameters`; and tool
+        results come back as `user` messages containing `tool_result` blocks
+        rather than `tool` messages. Everything is converted here so that
+        agent.py, tools.py and critic.py never learn which backend they are on.
+        """
+        system = "\n\n".join(str(m.get("content") or "") for m in messages
+                             if m.get("role") == "system")
+
+        conv: list[dict] = []
+        for m in messages:
+            role = m.get("role")
+            if role == "system":
+                continue
+            if role == "assistant":
+                blocks = []
+                if m.get("content"):
+                    blocks.append({"type": "text", "text": str(m["content"])})
+                for tc in (m.get("tool_calls") or []):
+                    fn = tc.get("function", {})
+                    args = fn.get("arguments", {})
+                    if isinstance(args, str):
+                        try:
+                            args = json.loads(args or "{}")
+                        except json.JSONDecodeError:
+                            args = {}
+                    blocks.append({"type": "tool_use", "id": tc.get("id", "call_0"),
+                                   "name": fn.get("name", ""), "input": args})
+                if blocks:
+                    conv.append({"role": "assistant", "content": blocks})
+            elif role == "tool":
+                conv.append({"role": "user", "content": [{
+                    "type": "tool_result",
+                    "tool_use_id": m.get("tool_call_id", "call_0"),
+                    "content": str(m.get("content") or ""),
+                }]})
+            else:
+                conv.append({"role": "user", "content": str(m.get("content") or "")})
+
+        kwargs: dict = {"model": self.model, "max_tokens": self.max_tokens,
+                        "messages": conv, "temperature": self.temperature}
+        if system:
+            kwargs["system"] = system
+        if tools:
+            kwargs["tools"] = [{"name": t["function"]["name"],
+                                "description": t["function"].get("description", ""),
+                                "input_schema": t["function"]["parameters"]}
+                               for t in tools]
+
+        resp = self._client.messages.create(**kwargs)
+        if getattr(resp, "usage", None):
+            self.usage.add(resp.usage.input_tokens, resp.usage.output_tokens)
+
+        text, calls = [], []
+        for block in resp.content:
+            if block.type == "text":
+                text.append(block.text)
+            elif block.type == "tool_use":
+                calls.append({"id": block.id, "type": "function",
+                              "function": {"name": block.name,
+                                           "arguments": json.dumps(block.input)}})
+        return {"role": "assistant", "content": "\n".join(text) or None,
+                "tool_calls": calls or None}
 
     def _adapt(self, error_text: str) -> bool:
         low = error_text.lower()
