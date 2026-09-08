@@ -1,0 +1,155 @@
+[
+ {
+  "seed": 0,
+  "statement": "The direct method predicts excited-state energies with 24% less error than the cheap TDDFT approximation on the random split.",
+  "claim_id": "agent_seed0",
+  "verdict": "signed",
+  "kind": "exploratory",
+  "reasons": [],
+  "checks": {
+   "split_hash": {
+    "passed": true,
+    "detail": "split random hash e7edcaba59fa"
+   },
+   "evidence_resolves": {
+    "passed": true,
+    "detail": "1 evidence ids resolve"
+   },
+   "scope": {
+    "passed": true,
+    "detail": "quantifier matches the configs run"
+   },
+   "control": {
+    "passed": true,
+    "detail": "not a mechanistic claim"
+   },
+   "comparisons_in_family": {
+    "passed": true,
+    "detail": "1 runs"
+   },
+   "sealed_rerun": {
+    "passed": true,
+    "detail": "sealed MAE a=0.37599 b=0.20912 (diff +0.16687)"
+   },
+   "noise_floor": {
+    "passed": true,
+    "detail": "paired bootstrap CI [0.153722, 0.180911] on 2178 molecules"
+   },
+   "val_to_test_gap": {
+    "passed": true,
+    "detail": "val->test gap a=+0.00457 b=+0.00294"
+   },
+   "direction": {
+    "passed": true,
+    "detail": "claim says E2/direct/PBE0-SVP beats E2/cheap/PBE0-SVP; measured 0.20912 vs 0.37599"
+   },
+   "_p_value": 0.0
+  }
+ },
+ {
+  "seed": 1,
+  "statement": "The direct method outperforms the cheap TDDFT approximation for oscillator strengths (f1) on the random split, with a MAE of 0.016371 a.u. versus 0.010683 a.u.",
+  "claim_id": "agent_seed1",
+  "verdict": "rejected",
+  "kind": "exploratory",
+  "reasons": [
+   "overscoped: claims split='random' but ran ['random', 'tddft_gap']",
+   "wrong_direction: the effect is real but runs the other way -- f1/cheap beats f1/direct by 0.00417"
+  ],
+  "checks": {
+   "split_hash": {
+    "passed": true,
+    "detail": "split random hash e7edcaba59fa"
+   },
+   "evidence_resolves": {
+    "passed": true,
+    "detail": "2 evidence ids resolve"
+   },
+   "scope": {
+    "passed": false,
+    "detail": "claims split='random' but ran ['random', 'tddft_gap']",
+    "observed": {
+     "target": "f1",
+     "split": [
+      "random",
+      "tddft_gap"
+     ],
+     "cheap_level": "PBE0-SVP"
+    }
+   },
+   "control": {
+    "passed": true,
+    "detail": "not a mechanistic claim"
+   },
+   "comparisons_in_family": {
+    "passed": true,
+    "detail": "1 runs"
+   },
+   "sealed_rerun": {
+    "passed": true,
+    "detail": "sealed MAE a=0.01196 b=0.01613 (diff -0.00417)"
+   },
+   "noise_floor": {
+    "passed": true,
+    "detail": "paired bootstrap CI [-0.005524, -0.002794] on 2178 molecules"
+   },
+   "val_to_test_gap": {
+    "passed": true,
+    "detail": "val->test gap a=+0.00127 b=+0.00052"
+   },
+   "direction": {
+    "passed": false,
+    "detail": "claim says f1/direct beats f1/cheap; measured 0.01613 vs 0.01196"
+   },
+   "_p_value": 0.0
+  },
+  "narrowed_statement": "The direct method outperforms the cheap TDDFT approximation for oscillator strengths (f1) on the random split, with a MAE of 0.016371 a.u. versus 0.010683 a.u \u2014 for target=f1, split=['random', 'tddft_gap'], cheap_level=PBE0-SVP only."
+ },
+ {
+  "seed": 2,
+  "statement": "The delta method improves upon the direct method for predicting oscillator strengths (f1) in the random split, with a significant reduction in MAE (0.016371 \u2192 0.01037).",
+  "claim_id": "agent_seed2",
+  "verdict": "signed",
+  "kind": "exploratory",
+  "reasons": [],
+  "checks": {
+   "split_hash": {
+    "passed": true,
+    "detail": "split random hash e7edcaba59fa"
+   },
+   "evidence_resolves": {
+    "passed": true,
+    "detail": "3 evidence ids resolve"
+   },
+   "scope": {
+    "passed": true,
+    "detail": "quantifier matches the configs run"
+   },
+   "control": {
+    "passed": true,
+    "detail": "not a mechanistic claim"
+   },
+   "comparisons_in_family": {
+    "passed": true,
+    "detail": "4 runs"
+   },
+   "sealed_rerun": {
+    "passed": true,
+    "detail": "sealed MAE a=0.01613 b=0.01232 (diff +0.00380)"
+   },
+   "noise_floor": {
+    "passed": true,
+    "detail": "paired bootstrap CI [0.002665, 0.004942] on 2178 molecules"
+   },
+   "val_to_test_gap": {
+    "passed": true,
+    "detail": "val->test gap a=+0.00052 b=+0.00144"
+   },
+   "direction": {
+    "passed": true,
+    "detail": "claim says f1/delta/CAM beats f1/direct/CAM; measured 0.01232 vs 0.01613"
+   },
+   "_p_value": 0.0
+  }
+ }
+]
