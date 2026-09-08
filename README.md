@@ -43,12 +43,16 @@ uv run python selftest.py        # 11 checks
 
 ### Headline
 
-The agent loses to a pre-written 12-line schedule on search efficiency and spends 31,649
-tokens doing it — but the referee signed 2 of its 3 claims on a sealed test set, and
-rejected the third for pointing the wrong way. It can generate findings; it cannot be
-trusted to grade them; the grading is separable and cheap.
+Across 8 seeds the agent loses to a pre-written 12-line schedule on every target, and the
+referee signs **1 of its 8 claims** — two of them were exactly backwards. It can generate
+findings; it cannot be trusted to grade them; the grading is separable, cheap and mechanical.
 
-The referee also rejected one of the **author's** claims. That one matters more.
+The diagnosis is specific: **5 of 8 seeds never tried delta-learning at all**, the one method
+every other result here depends on. One seed spent 11 of 12 experiments running `direct`
+eleven times. More budget does not help an agent that is not varying the axis that matters.
+
+The referee also rejected one of the **author's** claims, and one pre-registered hypothesis
+came out falsified. Those two matter more than the successes.
 
 ---
 

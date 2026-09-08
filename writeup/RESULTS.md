@@ -200,23 +200,13 @@ author. The claim is withdrawn.
 
 ### 7. Did the agent do anything?
 
-Three arms, same budget of 12 experiments, 3 seeds, agent driven by a local Qwen3 8B at
-temperature 0.7:
+Three arms, same budget of 12 experiments per run, agent driven by a local Qwen3 8B at
+temperature 0.7. Eight seeds for the agent; the null policies are deterministic given the
+space and the schedule.
 
-| arm | E1 | E2 | f1 | f2 | tokens |
-|---|---:|---:|---:|---:|---:|
-| random sampling | 0.205 | 0.143 | 0.0121 | 0.0310 | 0 |
-| **fixed human grid** | **0.064** | **0.120** | **0.0090** | — | **0** |
-| agent (Qwen3 8B) | 0.175 | 0.244 | 0.0144 | 0.0354 | 31,649 |
-
-**On search efficiency the agent loses to both null policies**, and spends 31,649 tokens
-doing it. A 12-line schedule written before any results were seen beats it on every target
-it covers, and beats uniform sampling 3.2× on E1.
-
-#### Eight seeds, and the real diagnosis
-
-Extending to eight seeds sharpens it. The grid now sits **below the agent's confidence
-interval on every target**, and the agent loses to *random sampling* on three of four:
+**On search efficiency the agent loses to both null policies.** The grid sits below the
+agent's confidence interval on every target, and the agent loses to *random sampling* on
+three of four:
 
 | target | agent (8 seeds) | 95% CI | grid | random |
 |---|---:|---|---:|---:|
