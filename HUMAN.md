@@ -135,6 +135,29 @@ this."
 
 ---
 
+### 2026-09-08 · the referee turned on the author
+
+Two of my own claims were tested rather than asserted, and one died.
+
+- **Withdrawn.** "Δ-learning beats cheap for f1 on the TDDFT-gap split" — repeated several
+  times as the most interesting open item in the project. On the sealed set at full
+  precision: cheap 0.03077, Δ 0.03032, paired CI [-0.000463, +0.001328]. Includes zero.
+  The original figure came from one fast-mode validation run. `h_f_on_gap_split` is marked
+  FALSIFIED, which is what its own stated criterion required.
+- **Survived.** The gap-stratified error result, re-measured on the sealed set: 2.26×
+  ratio between narrowest and widest gap quartile, CI [1.97, 2.59]. But the description
+  was wrong — it is not a monotone trend, the second quartile is marginally worse than the
+  first. Corrected to what the data supports.
+- **Hedged.** "The effect has not previously been reported" became "we found no prior work
+  reporting that." QM8 is well studied and absence of a citation is not absence of prior
+  art.
+
+Worth naming plainly: the author produced a false finding, promoted it, and repeated it,
+and the same machinery built to discipline the agent caught it. That is the argument for
+the second half of the invariant.
+
+---
+
 ## Open, and honestly unresolved
 
 - Whether the agent beats random search at equal budget is **not yet known**, and the

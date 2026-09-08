@@ -113,18 +113,29 @@ This comparison is only possible because the environment parses the raw 2015 rel
 
 ### 4. The error lives in near-degenerate states
 
-E1 Δ-error, stratified by the *cheap* TDDFT E2−E1 gap:
+E1 Δ-error, stratified by the *cheap* TDDFT E2−E1 gap. **Sealed test set, full precision**:
 
 | gap quartile (eV) | n | MAE (eV) |
 |---|---:|---:|
-| 0.000 – 0.285 | 545 | **0.095** |
-| 0.285 – 0.520 | 544 | 0.078 |
-| 0.520 – 0.999 | 545 | 0.085 |
-| 0.999 – 4.383 | 545 | **0.042** |
+| 0.001 – 0.282 | 545 | 0.0859 |
+| 0.282 – 0.517 | 544 | **0.0887** |
+| 0.517 – 0.976 | 544 | 0.0758 |
+| 0.976 – 3.422 | 545 | **0.0379** |
 
-A 2.3× spread. Ramakrishnan et al. attributed the oscillator-strength failure to state
-ordering being ambiguous between methods; this shows the same mechanism is measurably
-present in the *energies*, where the effect has not previously been reported.
+```
+ratio, narrowest / widest quartile = 2.26x    CI [1.97, 2.59]
+```
+
+The interval excludes 1, so the effect is real. But state it precisely: this is **not** a
+monotone trend — the second quartile is marginally worse than the first. What the data
+supports is that the **widest-gap quartile is roughly half the error of everything else**,
+not a smooth decline with separation.
+
+Ramakrishnan et al. attributed the oscillator-strength failure to state ordering being
+ambiguous between methods. The same mechanism appears to be measurably present in the
+*energies*. We found no prior work reporting that, though we make the weaker claim
+deliberately — this is a well-studied dataset and absence of a citation is not absence of
+prior art.
 
 Note the split used for distribution shift is on the **TDDFT** gap, not the CC2 gap. The
 CC2 gap would be the natural quantity and is the wrong one — it is only available after
