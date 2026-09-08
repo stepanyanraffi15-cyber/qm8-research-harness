@@ -19,10 +19,21 @@ primary outcome before the audit runs, so selection cannot happen through a huma
 | Asked for | Where it is | State |
 |---|---|---|
 | Research write-up | `writeup/` | not started |
-| Code | `world/`, `splits.py`, `features.py`, `models.py` | in progress |
-| Agent harness code | `agent.py`, `tools.py`, `critic.py`, `llm.py`, `evaluate.py` | in progress |
-| Run traces | `results/` — full trajectories, not summaries | not started |
+| Code | `world/build.py`, `features.py`, `models.py` | done, self-checking |
+| Agent harness code | `agent.py`, `tools.py`, `critic.py`, `llm.py`, `evaluate.py` | done |
+| Run traces | `results/` — full trajectories, not summaries | mock only; needs a real model |
 | What was done by hand | `HUMAN.md` | running log, written as it happens |
+
+### Checks that currently pass
+
+```
+parse vs Ramakrishnan et al. 2015    E1 0.2712 eV (paper 0.27), E2 0.3704 (0.37)
+reset determinism                    identical manifest hashes across two builds
+SMILES join                          exact on the 12 columns both sources share
+leakage control                      shuffle_labels drives MAE 0.075 -> 0.967
+sealed-set isolation                 models.run raises without the audit token
+loop end to end                      4 steps, offline, no GPU, referee narrows the claim
+```
 
 ---
 

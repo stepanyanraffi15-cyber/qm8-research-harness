@@ -1,0 +1,1423 @@
+{
+  "budget_per_run": 12,
+  "seeds": 3,
+  "temperature": 0.7,
+  "wall_seconds": 60.9,
+  "summary": {
+    "random": {
+      "n_runs": 3,
+      "per_family": {
+        "E1": {
+          "mean_best_mae": 0.204776,
+          "ci95": [
+            0.15221,
+            0.257342
+          ],
+          "n_seeds": 2
+        },
+        "E2": {
+          "mean_best_mae": 0.142767,
+          "ci95": [
+            0.109871,
+            0.198007
+          ],
+          "n_seeds": 3
+        },
+        "f1": {
+          "mean_best_mae": 0.012133,
+          "ci95": [
+            0.009054,
+            0.016371
+          ],
+          "n_seeds": 3
+        },
+        "f2": {
+          "mean_best_mae": 0.030982,
+          "ci95": [
+            0.023022,
+            0.040817
+          ],
+          "n_seeds": 3
+        }
+      },
+      "families_covered": 4,
+      "pass^3": 0.667,
+      "mean_tokens": 0.0,
+      "claims": [],
+      "stopped": []
+    },
+    "grid": {
+      "n_runs": 3,
+      "per_family": {
+        "E1": {
+          "mean_best_mae": 0.064461,
+          "ci95": null,
+          "n_seeds": 3,
+          "degenerate": "no variation across seeds; this arm is deterministic, so a bootstrap over seeds measures nothing"
+        },
+        "E2": {
+          "mean_best_mae": 0.120421,
+          "ci95": null,
+          "n_seeds": 3,
+          "degenerate": "no variation across seeds; this arm is deterministic, so a bootstrap over seeds measures nothing"
+        },
+        "f1": {
+          "mean_best_mae": 0.00903,
+          "ci95": null,
+          "n_seeds": 3,
+          "degenerate": "no variation across seeds; this arm is deterministic, so a bootstrap over seeds measures nothing"
+        }
+      },
+      "families_covered": 3,
+      "pass^3": 0.0,
+      "mean_tokens": 0.0,
+      "claims": [],
+      "stopped": []
+    },
+    "agent": {
+      "n_runs": 3,
+      "per_family": {
+        "E1": {
+          "mean_best_mae": 0.074958,
+          "ci95": null,
+          "n_seeds": 3,
+          "degenerate": "no variation across seeds; this arm is deterministic, so a bootstrap over seeds measures nothing"
+        }
+      },
+      "families_covered": 1,
+      "pass^3": 0.0,
+      "mean_tokens": 3629.0,
+      "claims": [
+        {
+          "id": "claim_0",
+          "statement": "Delta-learning beats direct learning for excited-state prediction",
+          "kind": "comparison",
+          "scope": {
+            "target": "all",
+            "split": "random"
+          },
+          "evidence": [
+            "e_0000",
+            "e_0001"
+          ],
+          "config_a": {
+            "target": "E1",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "seed": 0
+          },
+          "config_b": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "seed": 0
+          },
+          "control": null
+        },
+        {
+          "id": "claim_0",
+          "statement": "Delta-learning beats direct learning for excited-state prediction",
+          "kind": "comparison",
+          "scope": {
+            "target": "all",
+            "split": "random"
+          },
+          "evidence": [
+            "e_0000",
+            "e_0001"
+          ],
+          "config_a": {
+            "target": "E1",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "seed": 0
+          },
+          "config_b": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "seed": 0
+          },
+          "control": null
+        },
+        {
+          "id": "claim_0",
+          "statement": "Delta-learning beats direct learning for excited-state prediction",
+          "kind": "comparison",
+          "scope": {
+            "target": "all",
+            "split": "random"
+          },
+          "evidence": [
+            "e_0000",
+            "e_0001"
+          ],
+          "config_a": {
+            "target": "E1",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "seed": 0
+          },
+          "config_b": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "seed": 0
+          },
+          "control": null
+        }
+      ],
+      "stopped": [
+        "claim",
+        "claim",
+        "claim"
+      ]
+    }
+  },
+  "runs": [
+    {
+      "arm": "random",
+      "seed": 0,
+      "trace": [
+        {
+          "config": {
+            "target": "f2",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "scaffold",
+            "n_train": 10000
+          },
+          "mae": 0.043693328740317366,
+          "best_so_far": 0.043693328740317366
+        },
+        {
+          "config": {
+            "target": "f2",
+            "method": "direct",
+            "cheap_level": "PBE0-TZVP",
+            "split": "scaffold",
+            "n_train": 500
+          },
+          "mae": 0.047307932398069096,
+          "best_so_far": 0.043693328740317366
+        },
+        {
+          "config": {
+            "target": "E2",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "n_train": 2500
+          },
+          "mae": 0.30324143867542586,
+          "best_so_far": 0.30324143867542586
+        },
+        {
+          "config": {
+            "target": "E2",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "tddft_gap",
+            "n_train": null
+          },
+          "mae": 0.2834779184389383,
+          "best_so_far": 0.2834779184389383
+        },
+        {
+          "config": {
+            "target": "f1",
+            "method": "direct",
+            "cheap_level": "CAM",
+            "split": "random",
+            "n_train": 2500
+          },
+          "mae": 0.020605032272117976,
+          "best_so_far": 0.020605032272117976
+        },
+        {
+          "config": {
+            "target": "f2",
+            "method": "direct",
+            "cheap_level": "CAM",
+            "split": "tddft_gap",
+            "n_train": 500
+          },
+          "mae": 0.043141503230936136,
+          "best_so_far": 0.043141503230936136
+        },
+        {
+          "config": {
+            "target": "f2",
+            "method": "direct",
+            "cheap_level": "CAM",
+            "split": "scaffold",
+            "n_train": null
+          },
+          "mae": 0.0432463453292386,
+          "best_so_far": 0.043141503230936136
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "cheap",
+            "cheap_level": "CAM",
+            "split": "scaffold",
+            "n_train": null
+          },
+          "mae": 0.15220950957703197,
+          "best_so_far": 0.15220950957703197
+        },
+        {
+          "config": {
+            "target": "f2",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "tddft_gap",
+            "n_train": 2500
+          },
+          "mae": 0.0408166131711264,
+          "best_so_far": 0.0408166131711264
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "cheap",
+            "cheap_level": "CAM",
+            "split": "random",
+            "n_train": 500
+          },
+          "mae": 0.19354008578721837,
+          "best_so_far": 0.15220950957703197
+        },
+        {
+          "config": {
+            "target": "E2",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random",
+            "n_train": null
+          },
+          "mae": 0.12042132457374065,
+          "best_so_far": 0.12042132457374065
+        },
+        {
+          "config": {
+            "target": "f1",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random",
+            "n_train": 2500
+          },
+          "mae": 0.010973407016351041,
+          "best_so_far": 0.010973407016351041
+        }
+      ],
+      "best": {
+        "f2": {
+          "mae": 0.0408166131711264,
+          "config": {
+            "target": "f2",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "tddft_gap",
+            "n_train": 2500
+          }
+        },
+        "E2": {
+          "mae": 0.12042132457374065,
+          "config": {
+            "target": "E2",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random",
+            "n_train": null
+          }
+        },
+        "f1": {
+          "mae": 0.010973407016351041,
+          "config": {
+            "target": "f1",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random",
+            "n_train": 2500
+          }
+        },
+        "E1": {
+          "mae": 0.15220950957703197,
+          "config": {
+            "target": "E1",
+            "method": "cheap",
+            "cheap_level": "CAM",
+            "split": "scaffold",
+            "n_train": null
+          }
+        }
+      },
+      "tokens": 0
+    },
+    {
+      "arm": "random",
+      "seed": 1,
+      "trace": [
+        {
+          "config": {
+            "target": "E2",
+            "method": "delta",
+            "cheap_level": "PBE0-SVP",
+            "split": "scaffold",
+            "n_train": null
+          },
+          "mae": 0.15175672412103092,
+          "best_so_far": 0.15175672412103092
+        },
+        {
+          "config": {
+            "target": "f2",
+            "method": "direct",
+            "cheap_level": "PBE0-TZVP",
+            "split": "tddft_gap",
+            "n_train": 10000
+          },
+          "mae": 0.03586000150440456,
+          "best_so_far": 0.03586000150440456
+        },
+        {
+          "config": {
+            "target": "E2",
+            "method": "cheap",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random",
+            "n_train": 10000
+          },
+          "mae": 0.40444350887624925,
+          "best_so_far": 0.15175672412103092
+        },
+        {
+          "config": {
+            "target": "f2",
+            "method": "delta",
+            "cheap_level": "PBE0-SVP",
+            "split": "tddft_gap",
+            "n_train": 10000
+          },
+          "mae": 0.032659409205568195,
+          "best_so_far": 0.032659409205568195
+        },
+        {
+          "config": {
+            "target": "f1",
+            "method": "delta",
+            "cheap_level": "PBE0-SVP",
+            "split": "tddft_gap",
+            "n_train": null
+          },
+          "mae": 0.0205914390714542,
+          "best_so_far": 0.0205914390714542
+        },
+        {
+          "config": {
+            "target": "f1",
+            "method": "cheap",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "n_train": null
+          },
+          "mae": 0.01068299126204681,
+          "best_so_far": 0.01068299126204681
+        },
+        {
+          "config": {
+            "target": "f2",
+            "method": "delta",
+            "cheap_level": "PBE0-SVP",
+            "split": "scaffold",
+            "n_train": null
+          },
+          "mae": 0.02910613384777462,
+          "best_so_far": 0.02910613384777462
+        },
+        {
+          "config": {
+            "target": "E2",
+            "method": "direct",
+            "cheap_level": "PBE0-TZVP",
+            "split": "tddft_gap",
+            "n_train": 500
+          },
+          "mae": 0.41994427804462126,
+          "best_so_far": 0.15175672412103092
+        },
+        {
+          "config": {
+            "target": "f1",
+            "method": "cheap",
+            "cheap_level": "CAM",
+            "split": "random",
+            "n_train": 10000
+          },
+          "mae": 0.009054065553005966,
+          "best_so_far": 0.009054065553005966
+        },
+        {
+          "config": {
+            "target": "f1",
+            "method": "cheap",
+            "cheap_level": "PBE0-TZVP",
+            "split": "tddft_gap",
+            "n_train": null
+          },
+          "mae": 0.015096034125745755,
+          "best_so_far": 0.009054065553005966
+        },
+        {
+          "config": {
+            "target": "E2",
+            "method": "delta",
+            "cheap_level": "CAM",
+            "split": "scaffold",
+            "n_train": null
+          },
+          "mae": 0.10987106945167249,
+          "best_so_far": 0.10987106945167249
+        },
+        {
+          "config": {
+            "target": "f1",
+            "method": "delta",
+            "cheap_level": "CAM",
+            "split": "tddft_gap",
+            "n_train": 10000
+          },
+          "mae": 0.01817371052574568,
+          "best_so_far": 0.009054065553005966
+        }
+      ],
+      "best": {
+        "E2": {
+          "mae": 0.10987106945167249,
+          "config": {
+            "target": "E2",
+            "method": "delta",
+            "cheap_level": "CAM",
+            "split": "scaffold",
+            "n_train": null
+          }
+        },
+        "f2": {
+          "mae": 0.02910613384777462,
+          "config": {
+            "target": "f2",
+            "method": "delta",
+            "cheap_level": "PBE0-SVP",
+            "split": "scaffold",
+            "n_train": null
+          }
+        },
+        "f1": {
+          "mae": 0.009054065553005966,
+          "config": {
+            "target": "f1",
+            "method": "cheap",
+            "cheap_level": "CAM",
+            "split": "random",
+            "n_train": 10000
+          }
+        }
+      },
+      "tokens": 0
+    },
+    {
+      "arm": "random",
+      "seed": 2,
+      "trace": [
+        {
+          "config": {
+            "target": "E1",
+            "method": "cheap",
+            "cheap_level": "PBE0-SVP",
+            "split": "scaffold",
+            "n_train": 500
+          },
+          "mae": 0.2573423059225872,
+          "best_so_far": 0.2573423059225872
+        },
+        {
+          "config": {
+            "target": "f1",
+            "method": "direct",
+            "cheap_level": "CAM",
+            "split": "random",
+            "n_train": null
+          },
+          "mae": 0.016371150055041077,
+          "best_so_far": 0.016371150055041077
+        },
+        {
+          "config": {
+            "target": "E2",
+            "method": "direct",
+            "cheap_level": "CAM",
+            "split": "scaffold",
+            "n_train": 2500
+          },
+          "mae": 0.37412705378754557,
+          "best_so_far": 0.37412705378754557
+        },
+        {
+          "config": {
+            "target": "f2",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random",
+            "n_train": null
+          },
+          "mae": 0.023022223280397634,
+          "best_so_far": 0.023022223280397634
+        },
+        {
+          "config": {
+            "target": "f1",
+            "method": "direct",
+            "cheap_level": "PBE0-TZVP",
+            "split": "scaffold",
+            "n_train": 10000
+          },
+          "mae": 0.020604917184738898,
+          "best_so_far": 0.016371150055041077
+        },
+        {
+          "config": {
+            "target": "E2",
+            "method": "delta",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "n_train": 500
+          },
+          "mae": 0.19800738914309302,
+          "best_so_far": 0.19800738914309302
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "cheap",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random",
+            "n_train": 500
+          },
+          "mae": 0.27205911974442537,
+          "best_so_far": 0.2573423059225872
+        },
+        {
+          "config": {
+            "target": "f1",
+            "method": "delta",
+            "cheap_level": "CAM",
+            "split": "tddft_gap",
+            "n_train": 500
+          },
+          "mae": 0.021627489444336886,
+          "best_so_far": 0.016371150055041077
+        },
+        {
+          "config": {
+            "target": "f2",
+            "method": "direct",
+            "cheap_level": "CAM",
+            "split": "tddft_gap",
+            "n_train": 2500
+          },
+          "mae": 0.0408166131711264,
+          "best_so_far": 0.023022223280397634
+        },
+        {
+          "config": {
+            "target": "f1",
+            "method": "direct",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random",
+            "n_train": 10000
+          },
+          "mae": 0.01759973134489529,
+          "best_so_far": 0.016371150055041077
+        },
+        {
+          "config": {
+            "target": "f2",
+            "method": "delta",
+            "cheap_level": "CAM",
+            "split": "random",
+            "n_train": 10000
+          },
+          "mae": 0.024701786330092082,
+          "best_so_far": 0.023022223280397634
+        },
+        {
+          "config": {
+            "target": "f1",
+            "method": "direct",
+            "cheap_level": "CAM",
+            "split": "tddft_gap",
+            "n_train": 2500
+          },
+          "mae": 0.027764808151246007,
+          "best_so_far": 0.016371150055041077
+        }
+      ],
+      "best": {
+        "E1": {
+          "mae": 0.2573423059225872,
+          "config": {
+            "target": "E1",
+            "method": "cheap",
+            "cheap_level": "PBE0-SVP",
+            "split": "scaffold",
+            "n_train": 500
+          }
+        },
+        "f1": {
+          "mae": 0.016371150055041077,
+          "config": {
+            "target": "f1",
+            "method": "direct",
+            "cheap_level": "CAM",
+            "split": "random",
+            "n_train": null
+          }
+        },
+        "E2": {
+          "mae": 0.19800738914309302,
+          "config": {
+            "target": "E2",
+            "method": "delta",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "n_train": 500
+          }
+        },
+        "f2": {
+          "mae": 0.023022223280397634,
+          "config": {
+            "target": "f2",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random",
+            "n_train": null
+          }
+        }
+      },
+      "tokens": 0
+    },
+    {
+      "arm": "grid",
+      "seed": 0,
+      "trace": [
+        {
+          "config": {
+            "target": "E1",
+            "method": "cheap",
+            "cheap_level": "PBE0-SVP",
+            "split": "random"
+          },
+          "mae": 0.2750213361406646,
+          "best_so_far": 0.2750213361406646
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "random"
+          },
+          "mae": 0.22971815672610513,
+          "best_so_far": 0.22971815672610513
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "PBE0-SVP",
+            "split": "random"
+          },
+          "mae": 0.07495837197951401,
+          "best_so_far": 0.07495837197951401
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random"
+          },
+          "mae": 0.06446072130449614,
+          "best_so_far": 0.06446072130449614
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "CAM",
+            "split": "random"
+          },
+          "mae": 0.06484913239508024,
+          "best_so_far": 0.06446072130449614
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "scaffold"
+          },
+          "mae": 0.06759556419025296,
+          "best_so_far": 0.06446072130449614
+        },
+        {
+          "config": {
+            "target": "E2",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random"
+          },
+          "mae": 0.12042132457374065,
+          "best_so_far": 0.12042132457374065
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random",
+            "n_train": 500
+          },
+          "mae": 0.08895007999422168,
+          "best_so_far": 0.06446072130449614
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random",
+            "n_train": 2500
+          },
+          "mae": 0.07536654277703565,
+          "best_so_far": 0.06446072130449614
+        },
+        {
+          "config": {
+            "target": "f1",
+            "method": "cheap",
+            "cheap_level": "PBE0-SVP",
+            "split": "random"
+          },
+          "mae": 0.01068299126204681,
+          "best_so_far": 0.01068299126204681
+        },
+        {
+          "config": {
+            "target": "f1",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random"
+          },
+          "mae": 0.009030078795376968,
+          "best_so_far": 0.009030078795376968
+        },
+        {
+          "config": {
+            "target": "f1",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "tddft_gap"
+          },
+          "mae": 0.01590903831555167,
+          "best_so_far": 0.009030078795376968
+        }
+      ],
+      "best": {
+        "E1": {
+          "mae": 0.06446072130449614,
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random"
+          }
+        },
+        "E2": {
+          "mae": 0.12042132457374065,
+          "config": {
+            "target": "E2",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random"
+          }
+        },
+        "f1": {
+          "mae": 0.009030078795376968,
+          "config": {
+            "target": "f1",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random"
+          }
+        }
+      },
+      "tokens": 0
+    },
+    {
+      "arm": "grid",
+      "seed": 1,
+      "trace": [
+        {
+          "config": {
+            "target": "E1",
+            "method": "cheap",
+            "cheap_level": "PBE0-SVP",
+            "split": "random"
+          },
+          "mae": 0.2750213361406646,
+          "best_so_far": 0.2750213361406646
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "random"
+          },
+          "mae": 0.22971815672610513,
+          "best_so_far": 0.22971815672610513
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "PBE0-SVP",
+            "split": "random"
+          },
+          "mae": 0.07495837197951401,
+          "best_so_far": 0.07495837197951401
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random"
+          },
+          "mae": 0.06446072130449614,
+          "best_so_far": 0.06446072130449614
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "CAM",
+            "split": "random"
+          },
+          "mae": 0.06484913239508024,
+          "best_so_far": 0.06446072130449614
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "scaffold"
+          },
+          "mae": 0.06759556419025296,
+          "best_so_far": 0.06446072130449614
+        },
+        {
+          "config": {
+            "target": "E2",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random"
+          },
+          "mae": 0.12042132457374065,
+          "best_so_far": 0.12042132457374065
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random",
+            "n_train": 500
+          },
+          "mae": 0.08895007999422168,
+          "best_so_far": 0.06446072130449614
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random",
+            "n_train": 2500
+          },
+          "mae": 0.07536654277703565,
+          "best_so_far": 0.06446072130449614
+        },
+        {
+          "config": {
+            "target": "f1",
+            "method": "cheap",
+            "cheap_level": "PBE0-SVP",
+            "split": "random"
+          },
+          "mae": 0.01068299126204681,
+          "best_so_far": 0.01068299126204681
+        },
+        {
+          "config": {
+            "target": "f1",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random"
+          },
+          "mae": 0.009030078795376968,
+          "best_so_far": 0.009030078795376968
+        },
+        {
+          "config": {
+            "target": "f1",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "tddft_gap"
+          },
+          "mae": 0.01590903831555167,
+          "best_so_far": 0.009030078795376968
+        }
+      ],
+      "best": {
+        "E1": {
+          "mae": 0.06446072130449614,
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random"
+          }
+        },
+        "E2": {
+          "mae": 0.12042132457374065,
+          "config": {
+            "target": "E2",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random"
+          }
+        },
+        "f1": {
+          "mae": 0.009030078795376968,
+          "config": {
+            "target": "f1",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random"
+          }
+        }
+      },
+      "tokens": 0
+    },
+    {
+      "arm": "grid",
+      "seed": 2,
+      "trace": [
+        {
+          "config": {
+            "target": "E1",
+            "method": "cheap",
+            "cheap_level": "PBE0-SVP",
+            "split": "random"
+          },
+          "mae": 0.2750213361406646,
+          "best_so_far": 0.2750213361406646
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "random"
+          },
+          "mae": 0.22971815672610513,
+          "best_so_far": 0.22971815672610513
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "PBE0-SVP",
+            "split": "random"
+          },
+          "mae": 0.07495837197951401,
+          "best_so_far": 0.07495837197951401
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random"
+          },
+          "mae": 0.06446072130449614,
+          "best_so_far": 0.06446072130449614
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "CAM",
+            "split": "random"
+          },
+          "mae": 0.06484913239508024,
+          "best_so_far": 0.06446072130449614
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "scaffold"
+          },
+          "mae": 0.06759556419025296,
+          "best_so_far": 0.06446072130449614
+        },
+        {
+          "config": {
+            "target": "E2",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random"
+          },
+          "mae": 0.12042132457374065,
+          "best_so_far": 0.12042132457374065
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random",
+            "n_train": 500
+          },
+          "mae": 0.08895007999422168,
+          "best_so_far": 0.06446072130449614
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random",
+            "n_train": 2500
+          },
+          "mae": 0.07536654277703565,
+          "best_so_far": 0.06446072130449614
+        },
+        {
+          "config": {
+            "target": "f1",
+            "method": "cheap",
+            "cheap_level": "PBE0-SVP",
+            "split": "random"
+          },
+          "mae": 0.01068299126204681,
+          "best_so_far": 0.01068299126204681
+        },
+        {
+          "config": {
+            "target": "f1",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random"
+          },
+          "mae": 0.009030078795376968,
+          "best_so_far": 0.009030078795376968
+        },
+        {
+          "config": {
+            "target": "f1",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "tddft_gap"
+          },
+          "mae": 0.01590903831555167,
+          "best_so_far": 0.009030078795376968
+        }
+      ],
+      "best": {
+        "E1": {
+          "mae": 0.06446072130449614,
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random"
+          }
+        },
+        "E2": {
+          "mae": 0.12042132457374065,
+          "config": {
+            "target": "E2",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random"
+          }
+        },
+        "f1": {
+          "mae": 0.009030078795376968,
+          "config": {
+            "target": "f1",
+            "method": "delta",
+            "cheap_level": "PBE0-TZVP",
+            "split": "random"
+          }
+        }
+      },
+      "tokens": 0
+    },
+    {
+      "arm": "agent",
+      "seed": 0,
+      "trace": [
+        {
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          },
+          "mae": 0.074958,
+          "best_so_far": 0.074958
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          },
+          "mae": 0.229718,
+          "best_so_far": 0.074958
+        }
+      ],
+      "best": {
+        "E1": {
+          "mae": 0.074958,
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          }
+        }
+      },
+      "tokens": 3629,
+      "stopped_because": "claim",
+      "claim": {
+        "id": "claim_0",
+        "statement": "Delta-learning beats direct learning for excited-state prediction",
+        "kind": "comparison",
+        "scope": {
+          "target": "all",
+          "split": "random"
+        },
+        "evidence": [
+          "e_0000",
+          "e_0001"
+        ],
+        "config_a": {
+          "target": "E1",
+          "method": "direct",
+          "cheap_level": "PBE0-SVP",
+          "split": "random",
+          "seed": 0
+        },
+        "config_b": {
+          "target": "E1",
+          "method": "delta",
+          "cheap_level": "PBE0-SVP",
+          "split": "random",
+          "seed": 0
+        },
+        "control": null
+      },
+      "log_path": "/Users/raffi/workspace/qm8_research/results/arms/agent_seed0.jsonl"
+    },
+    {
+      "arm": "agent",
+      "seed": 1,
+      "trace": [
+        {
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          },
+          "mae": 0.074958,
+          "best_so_far": 0.074958
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          },
+          "mae": 0.229718,
+          "best_so_far": 0.074958
+        }
+      ],
+      "best": {
+        "E1": {
+          "mae": 0.074958,
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          }
+        }
+      },
+      "tokens": 3629,
+      "stopped_because": "claim",
+      "claim": {
+        "id": "claim_0",
+        "statement": "Delta-learning beats direct learning for excited-state prediction",
+        "kind": "comparison",
+        "scope": {
+          "target": "all",
+          "split": "random"
+        },
+        "evidence": [
+          "e_0000",
+          "e_0001"
+        ],
+        "config_a": {
+          "target": "E1",
+          "method": "direct",
+          "cheap_level": "PBE0-SVP",
+          "split": "random",
+          "seed": 0
+        },
+        "config_b": {
+          "target": "E1",
+          "method": "delta",
+          "cheap_level": "PBE0-SVP",
+          "split": "random",
+          "seed": 0
+        },
+        "control": null
+      },
+      "log_path": "/Users/raffi/workspace/qm8_research/results/arms/agent_seed1.jsonl"
+    },
+    {
+      "arm": "agent",
+      "seed": 2,
+      "trace": [
+        {
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          },
+          "mae": 0.074958,
+          "best_so_far": 0.074958
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          },
+          "mae": 0.229718,
+          "best_so_far": 0.074958
+        }
+      ],
+      "best": {
+        "E1": {
+          "mae": 0.074958,
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          }
+        }
+      },
+      "tokens": 3629,
+      "stopped_because": "claim",
+      "claim": {
+        "id": "claim_0",
+        "statement": "Delta-learning beats direct learning for excited-state prediction",
+        "kind": "comparison",
+        "scope": {
+          "target": "all",
+          "split": "random"
+        },
+        "evidence": [
+          "e_0000",
+          "e_0001"
+        ],
+        "config_a": {
+          "target": "E1",
+          "method": "direct",
+          "cheap_level": "PBE0-SVP",
+          "split": "random",
+          "seed": 0
+        },
+        "config_b": {
+          "target": "E1",
+          "method": "delta",
+          "cheap_level": "PBE0-SVP",
+          "split": "random",
+          "seed": 0
+        },
+        "control": null
+      },
+      "log_path": "/Users/raffi/workspace/qm8_research/results/arms/agent_seed2.jsonl"
+    }
+  ]
+}

@@ -62,6 +62,60 @@ produce any number in the write-up. Those go through `critic.py`, which is a scr
   CI recipe, the failure-histogram discipline. Written here: everything chemistry, the
   three-way sealed split, pre-registration, and the claim verifiers.
 
+### 2026-09-07/08 · build
+
+Order was **world → referee → evaluator → agent**, inverting both earlier design
+documents, which put the agent first. Everything below was found by running code, not
+by planning.
+
+**Written by hand (human + LLM pair):** every file in the repo. **Run by the agent:**
+nothing yet — the agent arm has only been exercised against the mock backend.
+
+Findings that came out of building, in the order they appeared:
+
+1. **MoleculeNet's `qm8.csv` is damaged.** Its two PBE0 blocks are byte-identical across
+   all 21,786 molecules, so it ships **12 distinct tasks under 16 column headers**.
+   PBE0/def2TZVP is a verbatim copy of PBE0/def2SVP. This is why most papers report 12
+   tasks. The genuine fourth level exists only in the 2015 supplementary release.
+   Consequence: the `cheap_level` axis has three real values only because the environment
+   parses the raw file. Anyone working from the CSV cannot run that comparison at all.
+2. **DeepChem's 21,747 is not a SMILES-sanitization artifact.** RDKit parses all 21,786
+   without a single failure. The earlier documents assumed otherwise.
+3. **The prior claims that had no artifact behind them mostly hold.** Independently
+   regenerated: |r| 0.903 within energies (claimed 0.90), 0.367 within oscillator
+   strengths (0.37), 0.083 across blocks (0.08), 16.7% acyclic, 47.2% top-20 scaffold
+   coverage, and a greedy scaffold test set of 2,178 molecules across 2,178 singleton
+   scaffolds (claimed 2,180/2,180). So that analysis was real; it was just never written
+   to disk.
+4. **A hypothesis of mine died.** I proposed that "Δ-learning fails for oscillator
+   strengths" was a metric artifact — that MAE on a right-skewed non-negative target
+   rewards predicting ≈0. Predict-zero scores **0.0220** on f1, worse than cheap (0.0107)
+   and worse than Δ (0.0120). The 2015 negative result replicates; my explanation for it
+   does not. Recorded rather than quietly dropped.
+5. **Nobody predicted this one.** On the TDDFT-gap split, Δ **beats** cheap for f1
+   (0.0206 vs 0.0216) — the only split where it does. That split isolates near-degenerate
+   excited states, which is exactly where state-ordering ambiguity should live.
+6. **The gap mechanism is visible in the energies.** `slice_error` on E1/Δ by TDDFT state
+   gap gives 0.095 eV on the most degenerate quartile against 0.042 eV on the most
+   separated — a 2.3× spread.
+7. **PBE0/def2TZVP is a better cheap baseline than def2SVP** for Δ-learning: 0.0630 vs
+   0.0721 eV on the sealed test set, paired bootstrap CI [-0.011, -0.007]. Only
+   measurable because of finding 1.
+8. **Seed variance is exactly zero here.** LightGBM on fixed data is deterministic, so
+   three seeds return the same number. Reporting "sd = 0.0" as a noise floor would invite
+   an agent to treat any difference as real, so the observation now says which instrument
+   to use instead — the paired bootstrap over molecules.
+
+Bugs found by running things, each of which would have produced a wrong result:
+
+- The greedy scaffold split put **zero** molecules in the sealed test set.
+- The referee treated an **absent** scope key as a universal quantifier, failing claims
+  for over-claiming about axes they never mentioned.
+- The narrowed statement echoed the **claimed** scope back (`target=all`) instead of what
+  was actually run, which defeats the entire purpose of narrowing.
+- The comparison count matched on the claimed scope too, so a claim asserting "all"
+  matched nothing and reported a family size of zero.
+
 ---
 
 ## Open, and honestly unresolved
