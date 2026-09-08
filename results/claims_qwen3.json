@@ -1,0 +1,29 @@
+[
+ {
+  "id": "claim_0",
+  "statement": "The direct method significantly outperforms the cheap TDDFT baseline in predicting oscillator strengths (f1), with the largest discrepancies observed for molecules where the cheap method is most inaccurate.",
+  "kind": "comparison",
+  "scope": {
+   "split": "random",
+   "target": "f1"
+  },
+  "evidence": [
+   "e_0001",
+   "e_0004",
+   "e_0005",
+   "e_0006",
+   "e_0007"
+  ],
+  "config_a": {
+   "cheap_level": "PBE0-SVP",
+   "method": "cheap",
+   "target": "f1"
+  },
+  "config_b": {
+   "cheap_level": "PBE0-SVP",
+   "method": "direct",
+   "target": "f1"
+  },
+  "control": null
+ }
+]

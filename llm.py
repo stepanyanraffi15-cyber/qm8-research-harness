@@ -230,7 +230,7 @@ class LLM:
 
         payload = {
             "model": self.model,
-            "messages": messages,
+            "messages": [_to_ollama_message(m) for m in messages],
             "think": False,
             "stream": False,
             "options": {"temperature": self.temperature, "num_predict": self.max_tokens},
@@ -278,6 +278,37 @@ class LLM:
             self._send_temperature = False
             return True
         return False
+
+
+def _to_ollama_message(m: dict) -> dict:
+    """Convert one OpenAI-shaped message into what Ollama's native API accepts.
+
+    The round trip is asymmetric, which is the trap. Ollama RETURNS tool-call
+    arguments as an object; the agent loop stores the OpenAI form, a JSON string.
+    Replaying that string back to /api/chat fails with
+
+        "Value looks like object, but can't find closing '}' symbol"
+
+    so the string has to be parsed back into an object on the way out. Ollama also
+    has no use for `type`, `tool_call_id` or `index`.
+    """
+    out = {"role": m.get("role"), "content": m.get("content") or ""}
+    calls = m.get("tool_calls")
+    if calls:
+        shaped = []
+        for tc in calls:
+            fn = dict(tc.get("function", {}))
+            args = fn.get("arguments", {})
+            if isinstance(args, str):
+                try:
+                    args = json.loads(args or "{}")
+                except json.JSONDecodeError:
+                    args = {}
+            shaped.append({"function": {"name": fn.get("name", ""), "arguments": args}})
+        out["tool_calls"] = shaped
+    if m.get("role") == "tool" and m.get("name"):
+        out["tool_name"] = m["name"]
+    return out
 
 
 def _no_think(messages: list[dict]) -> list[dict]:

@@ -10,17 +10,23 @@ ChemCrow found GPT-4 could not separate confidently-wrong chemistry from correct
 chemistry, and trajectory judges show *argument blindness* -- failing to notice a
 wrong value passed to a tool (BabelJudge). A held-out number is not persuadable.
 
-Seven checks, in order. The first three catch fabrication and leakage; those
-existed in the earlier design. The last four catch the failures that actually
-occur in ML research, and did not:
+Eight checks, in order. The first three catch fabrication and leakage; those
+existed in the earlier design. The rest catch the failures that actually occur in
+ML research, and did not:
 
   1 split hash        the claim was measured on the partition it names
   2 evidence resolves every cited experiment is in the log
   3 sealed re-run     re-scored at full precision on the sealed test set
   4 noise floor       the effect exceeds a paired bootstrap CI over molecules
-  5 multiplicity      Holm correction over the configs actually compared
-  6 scope             the claim's quantifier matches the configs actually run
-  7 control           a mechanistic claim has a control experiment
+  5 direction         the effect runs the way the claim says it does
+  6 multiplicity      Holm correction over the configs actually compared
+  7 scope             the claim's quantifier matches the configs actually run
+  8 control           a mechanistic claim has a control experiment
+
+Check 5 was added because a real agent rollout produced a claim that was exactly
+backwards -- "direct beats cheap for f1" when cheap wins by 0.004 a.u. -- and an
+earlier version of this file SIGNED it. Verifying that a difference is real is
+not the same as verifying it points the way the claim says.
 
 Check 3 is why this file holds the audit token. Checks 5 and 6 need the log
 rather than the claim, because a claim's own account of how many things were
@@ -63,6 +69,7 @@ SIGNED, NARROWED, REJECTED = "signed", "narrowed", "rejected"
 FAILURES = [
     "unsupported_claim",
     "noise_as_signal",
+    "wrong_direction",
     "overscoped",
     "no_control",
     "gave_up",
@@ -131,6 +138,12 @@ def holm(p_values: dict[str, float], alpha: float = ALPHA) -> dict[str, dict]:
 # --------------------------------------------------------------------------
 # log and pre-registration
 # --------------------------------------------------------------------------
+
+
+def _name(claim: dict, key: str) -> str:
+    """Short label for a config, for readable verdicts."""
+    cfg = claim.get(key) or {}
+    return "/".join(str(cfg.get(k)) for k in ("target", "method", "cheap_level") if cfg.get(k))
 
 
 def read_log(path: Path = LOG_PATH) -> list[dict]:
@@ -348,10 +361,31 @@ class Critic:
                 ),
             }
             v.checks["val_to_test_gap"] = {"passed": True, "detail": stat["gap_summary"]}
+
+            # Direction. `config_b` is the one the claim says is better, so the
+            # paired difference mean(|err_a| - |err_b|) must be POSITIVE. Checking
+            # only that the CI excludes zero signs a claim that is exactly
+            # backwards -- which is not hypothetical: the first real agent rollout
+            # produced one, and an earlier version of this file signed it.
+            right_way = stat["ci95"][0] > 0
+            v.checks["direction"] = {
+                "passed": right_way,
+                "detail": (
+                    f"claim says {_name(claim, 'config_b')} beats "
+                    f"{_name(claim, 'config_a')}; measured "
+                    f"{stat['sealed_mae']['b']:.5f} vs {stat['sealed_mae']['a']:.5f}"
+                ),
+            }
+
             if not stat["excludes_zero"]:
                 v.verdict = REJECTED
+                v.reasons.append(f"noise_as_signal: CI {stat['ci95']} includes zero")
+            elif not right_way:
+                v.verdict = REJECTED
                 v.reasons.append(
-                    f"noise_as_signal: CI {stat['ci95']} includes zero"
+                    f"wrong_direction: the effect is real but runs the other way -- "
+                    f"{_name(claim, 'config_a')} beats {_name(claim, 'config_b')} "
+                    f"by {-stat['mean_difference']:.5f}"
                 )
             v.checks["_p_value"] = stat["p_value"]
         return v
