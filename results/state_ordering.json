@@ -1,0 +1,71 @@
+{
+  "swap": [
+    {
+      "level": "PBE0-SVP",
+      "n": 21786,
+      "swap_rate": 0.1636,
+      "mean_cc2_gap_when_swapped": 0.4999,
+      "mean_cc2_gap_otherwise": 0.8405,
+      "f_mae_as_given": 0.019224,
+      "f_mae_oracle": 0.015434,
+      "oracle_gain_pct": 19.71
+    },
+    {
+      "level": "PBE0-TZVP",
+      "n": 21786,
+      "swap_rate": 0.1212,
+      "mean_cc2_gap_when_swapped": 0.5032,
+      "mean_cc2_gap_otherwise": 0.8237,
+      "f_mae_as_given": 0.015692,
+      "f_mae_oracle": 0.01337,
+      "oracle_gain_pct": 14.8
+    },
+    {
+      "level": "CAM",
+      "n": 21786,
+      "swap_rate": 0.1181,
+      "mean_cc2_gap_when_swapped": 0.4453,
+      "mean_cc2_gap_otherwise": 0.8303,
+      "f_mae_as_given": 0.015832,
+      "f_mae_oracle": 0.012545,
+      "oracle_gain_pct": 20.76
+    }
+  ],
+  "energy_control": [
+    {
+      "level": "PBE0-SVP",
+      "swap_rate_energies": 0.0,
+      "oracle_gain_pct_energies": 0.0
+    },
+    {
+      "level": "PBE0-TZVP",
+      "swap_rate_energies": 0.0,
+      "oracle_gain_pct_energies": 0.0
+    },
+    {
+      "level": "CAM",
+      "swap_rate_energies": 0.0,
+      "oracle_gain_pct_energies": 0.0
+    }
+  ],
+  "brightness": [
+    {
+      "level": "PBE0-SVP",
+      "f_mae_energy_ordered": 0.019224,
+      "f_mae_brightness_ordered": 0.015434,
+      "reduction_pct": 19.71
+    },
+    {
+      "level": "PBE0-TZVP",
+      "f_mae_energy_ordered": 0.015692,
+      "f_mae_brightness_ordered": 0.01337,
+      "reduction_pct": 14.8
+    },
+    {
+      "level": "CAM",
+      "f_mae_energy_ordered": 0.015832,
+      "f_mae_brightness_ordered": 0.012545,
+      "reduction_pct": 20.76
+    }
+  ]
+}
