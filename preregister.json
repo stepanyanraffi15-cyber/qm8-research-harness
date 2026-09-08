@@ -1,7 +1,6 @@
 {
   "registered_at": "2026-09-08T14:40:00Z",
   "note": "Pre-registration only means something if it predates the measurement. Several hypotheses in hypotheses.jsonl were already observed during the build, so registering them now would be backdating, and they are listed under `exploratory_by_construction` instead. Only genuinely untested claims are registered as confirmatory. The referee reads the `claims` list; everything else here is documentation for a reader.",
-
   "claims": [
     {
       "id": "h_budget_plateau",
@@ -19,9 +18,27 @@
       "falsified_if": "No structure-only slice separates the swapped population beyond the paired bootstrap interval.",
       "control_required": "random_reindex",
       "registered_before_measurement": true
+    },
+    {
+      "id": "h_frontier_explores",
+      "statement": "A frontier model driving this same harness will explore the METHOD axis in at least 6 of 8 seeds, and reach a best E1 within 20% of the fixed grid's 0.06446 eV.",
+      "primary_outcome": "(a) count of seeds whose experiment log contains at least one method='delta' run, out of 8; (b) mean best-found E1 validation MAE across 8 seeds",
+      "thresholds": {
+        "seeds_trying_delta": ">=6 of 8",
+        "mean_best_E1": "<= 0.07735 (grid 0.06446 x 1.20)"
+      },
+      "baseline_to_beat": {
+        "qwen3_8b_seeds_trying_delta": "3 of 8",
+        "qwen3_8b_mean_best_E1": 0.19003,
+        "grid": 0.06446,
+        "random": 0.20478
+      },
+      "mechanism": "Qwen3 8B fixated on method='direct' in 5 of 8 seeds and never varied the one axis that matters, so its failure is confounded with capacity. If a stronger model explores the axis, capacity was the constraint. If it also fixates, the constraint is the harness -- the tool schema and system prompt -- which is actionable.",
+      "falsified_if": "Fewer than 6 of 8 seeds try delta, or mean best E1 exceeds 0.07735. Either outcome is reported; a null here is the more useful finding.",
+      "registered_before_measurement": true,
+      "note": "Registered before any frontier-model API key was available to this project, so no result could have informed it."
     }
   ],
-
   "exploratory_by_construction": [
     {
       "id": "h_cheap_level",
@@ -44,10 +61,14 @@
       "status": "FALSIFIED and withdrawn from the write-up"
     }
   ],
-
   "agent_claims": {
     "note": "Claims produced by agent rollouts are exploratory by definition -- the agent chooses what to claim after seeing validation results, which is the adaptive selection pre-registration exists to prevent. They are audited on the sealed set and reported with their multiplicity, never as confirmatory.",
-    "audited": ["agent_seed0", "agent_seed1", "agent_seed2"],
+    "audited": [
+      "agent_seed0",
+      "agent_seed1",
+      "agent_seed2"
+    ],
     "outcome": "2 signed, 1 rejected (wrong_direction and overscoped)"
-  }
+  },
+  "registered_at_addendum": "2026-09-08T16:20:00Z (h_frontier_explores added)"
 }
