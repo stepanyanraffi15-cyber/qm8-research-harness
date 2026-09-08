@@ -18,10 +18,10 @@ primary outcome before the audit runs, so selection cannot happen through a huma
 
 | Asked for | Where it is | State |
 |---|---|---|
-| Research write-up | `writeup/` | not started |
+| Research write-up | `writeup/RESULTS.md` | done |
 | Code | `world/build.py`, `features.py`, `models.py` | done, self-checking |
 | Agent harness code | `agent.py`, `tools.py`, `critic.py`, `llm.py`, `evaluate.py` | done |
-| Run traces | `results/` — full trajectories, not summaries | mock only; needs a real model |
+| Run traces | `results/` — full trajectories, not summaries | 3 Qwen3 rollouts + mock, with audits |
 | What was done by hand | `HUMAN.md` | running log, written as it happens |
 
 ### Checks that currently pass
@@ -34,6 +34,21 @@ leakage control                      shuffle_labels drives MAE 0.075 -> 0.967
 sealed-set isolation                 models.run raises without the audit token
 loop end to end                      4 steps, offline, no GPU, referee narrows the claim
 ```
+
+Run them yourself:
+
+```sh
+uv run python selftest.py        # 11 checks
+```
+
+### Headline
+
+The agent loses to a pre-written 12-line schedule on search efficiency and spends 31,649
+tokens doing it — but the referee signed 2 of its 3 claims on a sealed test set, and
+rejected the third for pointing the wrong way. It can generate findings; it cannot be
+trusted to grade them; the grading is separable and cheap.
+
+The referee also rejected one of the **author's** claims. That one matters more.
 
 ---
 
