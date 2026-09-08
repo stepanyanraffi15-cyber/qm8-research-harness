@@ -254,6 +254,22 @@ class Critic:
                 return False, f"claims {key}={claimed!r} but ran {sorted(seen)}"
         return True, "quantifier matches the configs run"
 
+    def _check_configs(self, claim: dict) -> tuple[bool, str]:
+        """A comparison claim must actually name the two things being compared.
+
+        An agent can and does emit `kind: "comparison"` with a null config_b. That
+        is a malformed claim, and it must produce a VERDICT rather than a
+        traceback -- the referee has to be at least as robust as the loop it
+        grades, or one bad claim takes down the whole audit.
+        """
+        if claim.get("kind") != "comparison":
+            return True, "not a comparison claim"
+        missing = [k for k in ("config_a", "config_b")
+                   if not isinstance(claim.get(k), dict) or not claim.get(k)]
+        if missing:
+            return False, f"comparison claim missing {', '.join(missing)}"
+        return True, "both configs present"
+
     def _check_control(self, claim: dict) -> tuple[bool, str]:
         if claim.get("kind") != "mechanism":
             return True, "not a mechanistic claim"
@@ -314,6 +330,7 @@ class Critic:
             ("evidence_resolves", self._check_evidence),
             ("scope", self._check_scope),
             ("control", self._check_control),
+            ("configs_present", self._check_configs),
         ):
             ok, detail = fn(claim)
             v.checks[name] = {"passed": ok, "detail": detail}
@@ -325,6 +342,7 @@ class Critic:
                         "evidence_resolves": "unsupported_claim",
                         "scope": "overscoped",
                         "control": "no_control",
+                        "configs_present": "unsupported_claim",
                     }[name]
                     + f": {detail}"
                 )
@@ -335,7 +353,8 @@ class Critic:
         # Scope failures are narrowable rather than fatal: the evidence is sound,
         # the quantifier is not. Rewrite the claim to what the log supports.
         if v.verdict == REJECTED and all(
-            v.checks[k]["passed"] for k in ("split_hash", "evidence_resolves", "control")
+            v.checks[k]["passed"]
+            for k in ("split_hash", "evidence_resolves", "control", "configs_present")
         ):
             v.verdict = NARROWED
             # Narrow to what the LOG supports, not to what the claim asserted.
