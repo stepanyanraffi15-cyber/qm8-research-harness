@@ -87,6 +87,8 @@ class Usage:
     completion_tokens: int = 0
     calls: int = 0
     retries: int = 0
+    cache_read_tokens: int = 0
+    cache_write_tokens: int = 0
 
     @property
     def total_tokens(self) -> int:
@@ -98,13 +100,20 @@ class Usage:
         self.calls += 1
 
     def as_dict(self) -> dict:
-        return {
+        d = {
             "prompt_tokens": self.prompt_tokens,
             "completion_tokens": self.completion_tokens,
             "total_tokens": self.total_tokens,
             "calls": self.calls,
             "retries": self.retries,
         }
+        if self.cache_read_tokens or self.cache_write_tokens:
+            d["cache_read_tokens"] = self.cache_read_tokens
+            d["cache_write_tokens"] = self.cache_write_tokens
+            billable = self.prompt_tokens + self.cache_write_tokens
+            d["cache_hit_rate"] = round(
+                self.cache_read_tokens / max(1, self.cache_read_tokens + billable), 3)
+        return d
 
 
 class LLMError(RuntimeError):
@@ -328,15 +337,32 @@ class LLM:
                         "messages": conv, "temperature": self.temperature}
         if system:
             kwargs["system"] = system
+
+        # This workload is ~99% input: the whole conversation is re-sent every
+        # call, and with thinking off a tool call is ~40 output tokens. The
+        # system prompt and tool schemas are byte-identical across every call in
+        # every rollout, so roughly 80% of all input is a stable repeated prefix.
+        # Auto-caching the longest cacheable prefix cuts the bill about 3x.
+        # Verify with usage.cache_read_input_tokens -- if it stays 0, something
+        # in the prefix is varying and the saving is silently not happening.
+        kwargs["cache_control"] = {"type": "ephemeral"}
         if tools:
             kwargs["tools"] = [{"name": t["function"]["name"],
                                 "description": t["function"].get("description", ""),
                                 "input_schema": t["function"]["parameters"]}
                                for t in tools]
+        if not self.thinking:
+            # Kept off to match the Qwen arm exactly. Only the harness differs
+            # between the two runs; changing the thinking policy as well would
+            # confound the model comparison the pre-registered claim is about.
+            kwargs["thinking"] = {"type": "disabled"}
 
         resp = self._client.messages.create(**kwargs)
         if getattr(resp, "usage", None):
             self.usage.add(resp.usage.input_tokens, resp.usage.output_tokens)
+            self.usage.cache_read_tokens += getattr(resp.usage, "cache_read_input_tokens", 0) or 0
+            self.usage.cache_write_tokens += (
+                getattr(resp.usage, "cache_creation_input_tokens", 0) or 0)
 
         text, calls = [], []
         for block in resp.content:
