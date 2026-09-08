@@ -256,6 +256,20 @@ deploy without being embarrassed on the second excited state.
 
 ---
 
+### 2026-09-08 · E1 abstention through the referee
+
+The E1 transfer had only been measured on validation. Audited on the sealed set: full
+0.072082, selective@50% 0.059528, random 0.072074 with CI [0.067712, 0.076914] — selective
+falls below the interval, so it holds. 17% error reduction at half coverage on the primary
+energy target.
+
+Signed, but typed **exploratory**, and the referee did that on its own because the claim is
+not in `preregister.json`. It could not be confirmatory whatever the number said: E1 was
+tested only after f1 worked. Registering it now would be backdating, which is the one thing
+pre-registration exists to prevent.
+
+---
+
 ## Open, and honestly unresolved
 
 - Whether the agent beats random search at equal budget is **not yet known**, and the

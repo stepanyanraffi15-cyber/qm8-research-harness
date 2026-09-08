@@ -401,12 +401,24 @@ This is the one claim in the project that clears every gate: registered before
 measurement, re-scored at full precision on a partition nothing had touched, with
 the registered control.
 
+Both state-1 targets were put through it:
+
+| target | full | selective @50% | random | random 95% CI | verdict |
+|---|---:|---:|---:|---|---|
+| f1 | 0.013946 | **0.011080** | 0.013954 | [0.012426, 0.015482] | **signed · confirmatory** |
+| E1 | 0.072082 | **0.059528** | 0.072074 | [0.067712, 0.076914] | **signed · exploratory** |
+
 ```
-sealed    full 0.013946    selective@50% 0.011080    random 0.013954
-          random 95% CI [0.012426, 0.015482]  -> selective falls below it
 control   coin-flip classifier AUC 0.4862  CI [0.4532, 0.518]  -> null
-verdict   SIGNED · CONFIRMATORY
 ```
+
+Selective error falls below the random-rejection interval in both cases — 21% lower on f1,
+17% on E1 — with the registered control clean.
+
+The two verdicts differ in kind, and the difference is not cosmetic. **f1 is confirmatory**:
+registered before measurement. **E1 is exploratory**: it was tested only after f1 worked, so
+it cannot be confirmatory no matter how good the number is, and the referee typed it that
+way automatically because it is absent from `preregister.json`.
 
 Note the honest val→test gap: full-coverage error is 0.0139 on the sealed set
 against 0.0124 on validation. The selective advantage survives it.
