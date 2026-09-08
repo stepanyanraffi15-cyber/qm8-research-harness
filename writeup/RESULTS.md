@@ -370,6 +370,31 @@ means anything — random rejection at matched coverage:
 
 At half coverage the error falls **31%** while random rejection stays flat.
 
+#### Where it works, and where it does not
+
+The rule was built on `f1`. Testing whether it transfers — **exploratory, run only after f1
+worked, and labelled as such**:
+
+| target | full MAE | selective @50% | beats random | risk-quartile ratio |
+|---|---:|---:|:---:|---:|
+| f1 (a.u.) | 0.01244 | **0.00855** | yes | 3.52× |
+| **E1 (eV)** | 0.06759 | **0.05167** | yes | 2.53× |
+| f2 (a.u.) | 0.02932 | 0.02793 | no | 1.39× |
+| E2 (eV) | 0.13084 | 0.13586 | no | 0.94× |
+
+**It transfers to E1 — a 24% error reduction at half coverage on the project's primary
+target — and fails on both second states.**
+
+The mechanism is coherent rather than convenient. A swapped assignment corrupts state 1 and
+state 2 alike, but the second states are intrinsically much harder to predict (0.131 eV
+against 0.068 for E1), so misordering is a smaller share of their total error and is lost in
+it. E2's ratio of 0.94× is slightly *inverted* — a clean null, and a useful check that the
+classifier is not simply flagging "hard molecules" in general.
+
+So the claim is: **abstention works for state-1 quantities.** Stating it that narrowly is
+the difference between a rule someone can deploy and one that will embarrass them on the
+second excited state.
+
 #### Audited on the sealed test set
 
 This is the one claim in the project that clears every gate: registered before

@@ -237,6 +237,25 @@ upstream unverified.
 
 ---
 
+### 2026-09-08 · how far the abstention rule reaches
+
+Tested whether the misordering risk score transfers beyond `f1`. Exploratory — run only
+after f1 worked, so it is not pre-registered and is labelled that way.
+
+It transfers to **E1** (2.53× quartile ratio, 24% error reduction at half coverage) and
+fails on **f2** and **E2**. E2's ratio is 0.94×, marginally inverted, which is a clean null
+and a useful check that the classifier is not just flagging generally-hard molecules.
+
+The mechanism holds up: a swap corrupts both states, but the second states are intrinsically
+much harder (0.131 eV against 0.068 for E1), so misordering is a smaller fraction of their
+error and disappears into it.
+
+Worth having gone looking. The headline was "abstention works"; the true statement is
+"abstention works for state-1 quantities", and the second one is the one someone could
+deploy without being embarrassed on the second excited state.
+
+---
+
 ## Open, and honestly unresolved
 
 - Whether the agent beats random search at equal budget is **not yet known**, and the
