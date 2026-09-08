@@ -49,6 +49,25 @@ without an audit token that nothing importable from `tools.py` holds.
 
 ---
 
+## What we found, ordered by what matters
+
+| # | Finding | Status |
+|---|---|---|
+| A | **Misordering is predictable from structure alone**, giving an abstention rule that needs no CC2. AUC 0.693, error 3.52× higher in the top risk quartile, beats random rejection at every coverage. | **pre-registered, supported** |
+| B | **174× label efficiency** — Δ-learning on 100 CC2 labels beats direct learning on all 17,429. | measured, 3 seeds |
+| C | **Δ-learning's real value is robustness, not accuracy** — under scaffold shift direct learning is worse than doing nothing; Δ is not. | measured |
+| D | **MoleculeNet's `qm8.csv` ships 12 tasks under 16 headers.** One level of theory is a verbatim duplicate. | verified upstream |
+| E | **Fixing the state labelling does not rescue Δ-learning for oscillator strengths.** The 2015 negative result survives its own proposed remedy. | measured, CI includes zero |
+| F | **The agent loses to a 12-line schedule on search, but 2 of its 3 claims survived the referee.** | 3 seeds, 8B model |
+| G | `h_budget_plateau` — the plateau moves *backwards* from the registered prediction. | **pre-registered, falsified** |
+| H | Δ beats cheap for f1 on the gap split. | **withdrawn — noise** |
+
+Two of these are pre-registered, and one of those is falsified. One is a claim of
+ours that the referee killed. Both facts are load-bearing: a project that only
+reports what worked has not demonstrated that its referee does anything.
+
+---
+
 ## Results
 
 ### 1. MoleculeNet's QM8 distribution is damaged
@@ -232,7 +251,82 @@ positive — and nothing was testing that.
 Check 5, `direction`, now does. The mock agent could never have surfaced this: it only ever
 over-claims, never inverts. It took a real model making a real mistake.
 
+### 10. How few expensive labels? 174× fewer.
+
+The question the project is named after. E1, PBE0/def2TZVP baseline, three seeds
+per point with bootstrap intervals — the earlier version of this curve was a
+single run per point and its headline was read straight off it.
+
+| CC2 labels | direct (random) | Δ (random) | direct (scaffold) | Δ (scaffold) |
+|---:|---:|---:|---:|---:|
+| 100 | 0.566 | **0.120** | 0.649 | **0.111** |
+| 500 | 0.436 | 0.091 | 0.523 | 0.087 |
+| 2,500 | 0.298 | 0.075 | 0.437 | 0.074 |
+| 10,000 | 0.242 | 0.067 | 0.398 | 0.070 |
+| all 17,429 | 0.230 | 0.064 | 0.383 | 0.068 |
+
+Read the crossing point: **Δ-learning on 100 labels (0.120 eV) beats direct
+learning on all 17,429 (0.230 eV)** — 174× fewer expensive calculations, and the
+same factor on the scaffold split. Returns flatten early; going from 2,500 to
+17,429 labels, roughly seven times the CC2 compute, buys 0.011 eV.
+
+**`h_budget_plateau` — pre-registered — is FALSIFIED.** The registered prediction
+was that scaffold shift would need *more* labels to plateau. It plateaus at 2,500
+against random's 10,000: **earlier, not later**, the opposite of the prediction.
+
+The first version of the analysis script printed "MOVES", which is true and
+useless — direction is part of the claim. That is exactly the bug the referee's
+`direction` check exists to catch, committed again in our own analysis code a few
+hours after fixing it in the referee. Recorded because it is the second time the
+same error appeared, which says something about how easy it is.
+
+### 11. The result that is actually useful: abstention without CC2
+
+**`h_misorder_signature` — pre-registered before measurement — is SUPPORTED.**
+
+Every other result here needs CC2 to know a molecule is misordered, which is
+useless: CC2 is the thing being avoided. So: can misordering be predicted from
+**structure alone**?
+
+```
+structure-only classifier   AUC 0.693   CI [0.664, 0.723]
+control (a coin flip)       AUC 0.499   CI [0.466, 0.531]
+```
+
+The control is the registered one and it is clean. Δ-model error then follows the
+predicted risk monotonically across all four quartiles:
+
+| risk quartile | n | Δ MAE (a.u.) |
+|---|---:|---:|
+| lowest | 545 | 0.0055 |
+| | 544 | 0.0116 |
+| | 545 | 0.0132 |
+| highest | 545 | **0.0195** |
+
+**3.52× between highest and lowest, CI [2.85, 4.32].**
+
+Which makes the risk–coverage curve computable, against the only baseline that
+means anything — random rejection at matched coverage:
+
+| coverage | selective MAE | random MAE | random 95% CI | beats random |
+|---:|---:|---:|---|---|
+| 100% | 0.01244 | 0.01244 | — | — |
+| 90% | 0.01133 | 0.01245 | [0.01199, 0.01281] | yes |
+| 80% | 0.01063 | 0.01244 | [0.01181, 0.01301] | yes |
+| 70% | 0.00984 | 0.01245 | [0.01161, 0.01323] | yes |
+| 60% | 0.00916 | 0.01244 | [0.01144, 0.01338] | yes |
+| 50% | 0.00856 | 0.01243 | [0.01120, 0.01364] | yes |
+
+At half coverage the error falls **31%** while random rejection stays flat.
+
+This is the part that maps onto screening novel chemistry rather than onto a
+benchmark: a model that declines on the compounds it is about to get wrong, from
+structure alone, before any expensive calculation is run. It is worth more to a
+company screening unfamiliar compounds than a lower average error with no idea
+where it fails.
+
 ---
+
 
 ## What the referee catches
 
@@ -270,6 +364,13 @@ from **0.075 to 0.967**. There is no path by which test information reaches the 
   and must not be read as "LLM agents cannot do this."
 - **Three seeds is thin.** The agent's E1 interval spans [0.065, 0.230]. The right response
   is more seeds, not a stronger sentence.
+- **The abstention result is on validation, not the sealed set.** It is pre-registered and
+  controlled, but the sealed-set audit has not been run on it. Until it is, treat §11 as
+  strong evidence rather than a signed claim.
+- **Citations inherited from earlier planning documents are unverified.** The arXiv ids in
+  `docs/PLAN.md` came from LLM-assisted drafts and several sit at or past the assistant's
+  knowledge cutoff. They are labelled *course canon* rather than *verified* for that reason,
+  and should be checked against the papers before any of them is quoted in a submission.
 - **Gradient boosting on fingerprints is a weak predictor**, chosen for throughput
   (~10 s/fit). It discards the 3D geometry QM8 ships. The Δ-model barely notices; the
   direct model is crippled by it, so any Δ-vs-direct gap is partly a statement about the
