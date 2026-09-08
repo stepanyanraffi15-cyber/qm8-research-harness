@@ -252,14 +252,35 @@ class Critic:
             return False, f"control {ctrl!r} not in log"
         return True, f"control {ctrl} present"
 
+    def _runs_behind(self, claim: dict) -> list[dict]:
+        ids = set(claim.get("evidence", []))
+        return [e for e in self.log if e.get("experiment_id") in ids and "config" in e]
+
+    def _observed_scope(self, claim: dict) -> dict:
+        """What the cited runs actually cover, per axis."""
+        runs = self._runs_behind(claim)
+        out = {}
+        for key in ("target", "split", "cheap_level"):
+            seen = sorted({r["config"].get(key) for r in runs if r["config"].get(key)})
+            if seen:
+                out[key] = seen[0] if len(seen) == 1 else seen
+        return out
+
     def _count_comparisons(self, claim: dict) -> int:
         """How many configs in this claim's family were tried before it.
 
         Best-of-N on a noisy metric is an overestimate by construction, and the
-        claim's own narrative never mentions the N.
+        claim's own narrative never mentions the N. The family is defined by the
+        runs actually cited, not by the scope asserted -- a claim that says
+        target="all" would otherwise match nothing and report a count of zero.
         """
-        scope = claim.get("scope", {})
-        target, split = scope.get("target"), scope.get("split")
+        observed = self._observed_scope(claim)
+        target, split = observed.get("target"), observed.get("split")
+        if isinstance(target, list) or isinstance(split, list) or target is None:
+            # heterogeneous family: count everything sharing the split
+            return sum(1 for e in self.log
+                       if e.get("config", {}).get("split") == (split if isinstance(split, str) else None)
+                       or split is None)
         return sum(
             1
             for e in self.log
@@ -304,11 +325,14 @@ class Critic:
             v.checks[k]["passed"] for k in ("split_hash", "evidence_resolves", "control")
         ):
             v.verdict = NARROWED
-            scope = claim.get("scope", {})
+            # Narrow to what the LOG supports, not to what the claim asserted.
+            # Echoing the claimed scope back ("target=all") would defeat the point.
+            observed = self._observed_scope(claim)
             v.narrowed_statement = (
                 f"{claim.get('statement', '').rstrip('.')} "
-                f"— for target={scope.get('target')} on the {scope.get('split')} split only."
+                f"— for {', '.join(f'{k}={v2}' for k, v2 in observed.items())} only."
             )
+            v.checks["scope"]["observed"] = observed
 
         if v.verdict == REJECTED:
             return v

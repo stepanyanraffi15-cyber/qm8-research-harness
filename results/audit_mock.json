@@ -1,0 +1,71 @@
+{
+  "preregistration": {
+    "exists": true,
+    "sha256": "6bb3ca76d2edde53041a6dc8556f6209f93c122817991014d7d3df2090fdb45c",
+    "registered_at": "2026-09-07T21:00:00Z"
+  },
+  "n_claims": 1,
+  "signed": 0,
+  "narrowed": 1,
+  "rejected": 0,
+  "confirmatory": 0,
+  "exploratory": 1,
+  "failure_histogram": {
+    "unsupported_claim": 0,
+    "noise_as_signal": 0,
+    "overscoped": 1,
+    "no_control": 0,
+    "gave_up": 0,
+    "abstained_on_findable": 0
+  },
+  "verdicts": [
+    {
+      "claim_id": "claim_0",
+      "verdict": "narrowed",
+      "kind": "exploratory",
+      "reasons": [
+        "overscoped: claims all targets but only ran ['E1']"
+      ],
+      "checks": {
+        "split_hash": {
+          "passed": true,
+          "detail": "split random hash e7edcaba59fa"
+        },
+        "evidence_resolves": {
+          "passed": true,
+          "detail": "2 evidence ids resolve"
+        },
+        "scope": {
+          "passed": false,
+          "detail": "claims all targets but only ran ['E1']",
+          "observed": {
+            "target": "E1",
+            "split": "random",
+            "cheap_level": "PBE0-SVP"
+          }
+        },
+        "control": {
+          "passed": true,
+          "detail": "not a mechanistic claim"
+        },
+        "comparisons_in_family": {
+          "passed": true,
+          "detail": "2 runs"
+        },
+        "sealed_rerun": {
+          "passed": true,
+          "detail": "sealed MAE a=0.19251 b=0.07208 (diff +0.12042)"
+        },
+        "noise_floor": {
+          "passed": true,
+          "detail": "paired bootstrap CI [0.112357, 0.128452] on 2178 molecules"
+        },
+        "val_to_test_gap": {
+          "passed": true,
+          "detail": "val->test gap a=-0.00030 b=+0.00449"
+        }
+      },
+      "narrowed_statement": "Delta-learning beats direct learning for excited-state prediction \u2014 for target=E1, split=random, cheap_level=PBE0-SVP only."
+    }
+  ]
+}

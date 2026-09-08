@@ -1,0 +1,30 @@
+[
+ {
+  "id": "claim_0",
+  "statement": "Delta-learning beats direct learning for excited-state prediction",
+  "kind": "comparison",
+  "scope": {
+   "target": "all",
+   "split": "random"
+  },
+  "evidence": [
+   "e_0000",
+   "e_0001"
+  ],
+  "config_a": {
+   "target": "E1",
+   "method": "direct",
+   "cheap_level": "PBE0-SVP",
+   "split": "random",
+   "seed": 0
+  },
+  "config_b": {
+   "target": "E1",
+   "method": "delta",
+   "cheap_level": "PBE0-SVP",
+   "split": "random",
+   "seed": 0
+  },
+  "control": null
+ }
+]
