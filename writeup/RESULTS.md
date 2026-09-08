@@ -213,11 +213,44 @@ temperature 0.7:
 doing it. A 12-line schedule written before any results were seen beats it on every target
 it covers, and beats uniform sampling 3.2× on E1.
 
-The diagnosis is concrete rather than a shrug: **all three seeds spent 4 of their 12
-experiments before claiming.** The agent stops early, which is the *impatience* failure
-mode ResearchGym names, and it is a harness-and-prompt problem before it is a model
-problem. The E1 confidence interval, [0.065, 0.230], contains the grid's 0.064 — one seed
-matched a pre-written plan, two did not.
+#### Eight seeds, and the real diagnosis
+
+Extending to eight seeds sharpens it. The grid now sits **below the agent's confidence
+interval on every target**, and the agent loses to *random sampling* on three of four:
+
+| target | agent (8 seeds) | 95% CI | grid | random |
+|---|---:|---|---:|---:|
+| E1 | 0.190 | [0.111, 0.271] | **0.064** | 0.205 |
+| E2 | 0.219 | [0.169, 0.244] | **0.120** | 0.143 |
+| f1 | 0.0150 | [0.0126, 0.0177] | **0.0090** | 0.0121 |
+| f2 | 0.0336 | [0.0300, 0.0354] | — | **0.0310** |
+
+The obvious explanation is impatience — mean 5.4 of 12 experiments used, 45% of budget,
+six of eight seeds stopping at exactly four. That is ResearchGym's named failure mode and
+it is real. **It is also not the main problem.**
+
+| seed | experiments | methods tried | best E1 |
+|---:|---:|---|---:|
+| 5 | 11 | `direct` × 11 | 0.230 |
+| 3 | 8 | `direct` × 4, `delta` × 4 | 0.075 |
+| 2 | 4 | `direct` × 2, `delta` × 2 | **0.065** |
+| 6 | 4 | `direct` × 2, `delta` × 2 | **0.065** |
+| 0, 1, 4, 7 | 4 | `direct` only | 0.230 – 0.397 |
+
+**Five of eight seeds never tried delta-learning at all** — the single most important method
+in the space, and the one every other result in this write-up depends on. All five are stuck
+at 0.230 or worse. All three that did try it landed at 0.065–0.075, essentially matching the
+grid's 0.064 in two to four experiments.
+
+Seed 5 settles the question. It spent **eleven of twelve experiments running `direct` eleven
+times**: the most budget of any run, and nothing learned. More steps do not help an agent
+that is not varying the axis that matters.
+
+So the failure is not impatience, it is **failure to explore the method dimension**, and
+impatience is a symptom rather than the cause. That is a harness and prompt finding before
+it is a model finding — the tool schema lists all four methods with descriptions, and the
+agent fixates on the second one anyway. It is also the most actionable result here: an
+agent that reaches `delta` finds the answer almost immediately.
 
 ### 8. But two thirds of its claims survived the referee
 
