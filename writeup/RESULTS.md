@@ -27,7 +27,7 @@ agent produces means anything until something exists that can score a rollout.
 
 ```
 world/build.py   the environment, regenerable from a seed, byte for byte
-critic.py        the referee: 7 checks, 3 verdicts, deterministic
+critic.py        the referee: 8 checks, 3 verdicts, deterministic
 evaluate.py      three arms on one budget, bootstrap CIs, cost
 agent.py         the loop: policy + tools + observation + memory + stopping rule
 ```
@@ -83,9 +83,10 @@ All numbers from our own parse, validation split, `speed=fast`, seed 0.
 | E2 · random | 0.371 | 0.244 | **0.144** | — |
 | E2 · scaffold | 0.306 | 0.340 | **0.152** | — |
 | f1 · random | **0.011** | 0.016 | 0.012 | 0.022 |
-| f1 · tddft_gap | 0.022 | 0.025 | **0.021** | 0.032 |
+| f1 · tddft_gap | 0.022 | 0.025 | 0.021 † | 0.032 |
 
-Energies in eV, oscillator strengths in a.u.
+Energies in eV, oscillator strengths in a.u. † This apparent Δ win is **not**
+significant on the sealed set — see §6, where it is withdrawn.
 
 **The strongest result is the scaffold row.** Under structural shift a structure-only
 model (0.383) is *worse than doing nothing at all* (0.257), while the multi-fidelity model
@@ -142,12 +143,30 @@ The explanation is wrong. The 2015 negative result replicates; our reason for it
 Recorded because a project whose thesis is verifiable provenance does not get to quietly
 drop its own failed hypotheses.
 
-### 6. One thing nobody predicted
+### 6. A finding of ours that the referee killed — the author's, not the agent's
 
-Δ-learning beats the cheap baseline for f1 on the **TDDFT-gap split only** (0.0206 vs
-0.0216) — the split that isolates near-degenerate states. On random and scaffold splits it
-loses, reproducing 2015. This is unexplained, and it is the most interesting open item in
-the project.
+During the build, Δ-learning appeared to beat the cheap baseline for f1 on the **TDDFT-gap
+split only** — 0.0206 against 0.0216, the one split where the 2015 negative result seemed
+to reverse. It isolates near-degenerate states, so a mechanism was ready to hand. It was
+written up as the most interesting open item in the project and repeated several times
+before anyone tested it.
+
+Put through the referee, on the sealed test set, at full precision:
+
+```
+cheap 0.03077    delta 0.03032
+paired difference +0.000442    CI [-0.000463, +0.001328]
+excludes zero: NO
+```
+
+**It is noise.** The original number came from a single fast-mode run scored on validation,
+which is precisely the "best-of-N on a noisy metric" the referee exists to reject — and it
+was the author who produced it, not the agent.
+
+This is the more important half of the invariant doing its job. A sealed set that only
+disciplines the agent leaves the human free to promote any suggestive number they happen to
+like, and a project whose thesis is verifiable provenance does not get to exempt its own
+author. The claim is withdrawn.
 
 ### 7. Did the agent do anything?
 
