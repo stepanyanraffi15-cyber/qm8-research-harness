@@ -68,8 +68,9 @@ Order was **world → referee → evaluator → agent**, inverting both earlier 
 documents, which put the agent first. Everything below was found by running code, not
 by planning.
 
-**Written by hand (human + LLM pair):** every file in the repo. **Run by the agent:**
-nothing yet — the agent arm has only been exercised against the mock backend.
+**Written by hand (human + LLM pair):** every file in the repo. **Produced by the agent:**
+three rollouts on a local Qwen3 8B, three claims, of which the referee signed two and
+rejected one. No agent wrote any code.
 
 Findings that came out of building, in the order they appeared:
 
@@ -92,12 +93,12 @@ Findings that came out of building, in the order they appeared:
    rewards predicting ≈0. Predict-zero scores **0.0220** on f1, worse than cheap (0.0107)
    and worse than Δ (0.0120). The 2015 negative result replicates; my explanation for it
    does not. Recorded rather than quietly dropped.
-5. **Nobody predicted this one.** On the TDDFT-gap split, Δ **beats** cheap for f1
-   (0.0206 vs 0.0216) — the only split where it does. That split isolates near-degenerate
-   excited states, which is exactly where state-ordering ambiguity should live.
-6. **The gap mechanism is visible in the energies.** `slice_error` on E1/Δ by TDDFT state
-   gap gives 0.095 eV on the most degenerate quartile against 0.042 eV on the most
-   separated — a 2.3× spread.
+5. ~~**Nobody predicted this one.** On the TDDFT-gap split, Δ beats cheap for f1
+   (0.0206 vs 0.0216).~~ **WITHDRAWN 2026-09-08** — noise. See the entry below.
+6. **The gap mechanism is visible in the energies.** E1/Δ error by TDDFT state gap, on the
+   sealed set at full precision: 0.0379 eV on the widest-gap quartile against 0.0859 on the
+   narrowest — a 2.26× ratio, CI [1.97, 2.59]. Not a monotone trend, which the first
+   write-up of it got wrong.
 7. **PBE0/def2TZVP is a better cheap baseline than def2SVP** for Δ-learning: 0.0630 vs
    0.0721 eV on the sealed test set, paired bootstrap CI [-0.011, -0.007]. Only
    measurable because of finding 1.
