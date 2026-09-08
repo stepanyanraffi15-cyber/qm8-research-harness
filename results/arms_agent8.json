@@ -1,0 +1,548 @@
+{
+  "budget_per_run": 12,
+  "seeds": 3,
+  "temperature": 0.7,
+  "wall_seconds": 265.2,
+  "summary": {
+    "random": {
+      "n_runs": 3,
+      "per_family": {
+        "E1": {
+          "mean_best_mae": 0.204776,
+          "ci95": [
+            0.15221,
+            0.257342
+          ],
+          "n_seeds": 2
+        },
+        "E2": {
+          "mean_best_mae": 0.142767,
+          "ci95": [
+            0.109871,
+            0.198007
+          ],
+          "n_seeds": 3
+        },
+        "f1": {
+          "mean_best_mae": 0.012133,
+          "ci95": [
+            0.009054,
+            0.016371
+          ],
+          "n_seeds": 3
+        },
+        "f2": {
+          "mean_best_mae": 0.030982,
+          "ci95": [
+            0.023022,
+            0.040817
+          ],
+          "n_seeds": 3
+        }
+      },
+      "families_covered": 4,
+      "pass^3": 0.667,
+      "mean_tokens": 0.0,
+      "claims": [],
+      "stopped": []
+    },
+    "grid": {
+      "n_runs": 3,
+      "per_family": {
+        "E1": {
+          "mean_best_mae": 0.064461,
+          "ci95": null,
+          "n_seeds": 3,
+          "degenerate": "no variation across seeds; this arm is deterministic, so a bootstrap over seeds measures nothing"
+        },
+        "E2": {
+          "mean_best_mae": 0.120421,
+          "ci95": null,
+          "n_seeds": 3,
+          "degenerate": "no variation across seeds; this arm is deterministic, so a bootstrap over seeds measures nothing"
+        },
+        "f1": {
+          "mean_best_mae": 0.00903,
+          "ci95": null,
+          "n_seeds": 3,
+          "degenerate": "no variation across seeds; this arm is deterministic, so a bootstrap over seeds measures nothing"
+        }
+      },
+      "families_covered": 3,
+      "pass^3": 0.0,
+      "mean_tokens": 0.0,
+      "claims": [],
+      "stopped": []
+    },
+    "agent": {
+      "n_runs": 3,
+      "per_family": {
+        "E1": {
+          "mean_best_mae": 0.174762,
+          "ci95": [
+            0.064849,
+            0.229718
+          ],
+          "n_seeds": 3
+        },
+        "E2": {
+          "mean_best_mae": 0.243765,
+          "ci95": null,
+          "n_seeds": 1,
+          "degenerate": "no variation across seeds; this arm is deterministic, so a bootstrap over seeds measures nothing"
+        },
+        "f1": {
+          "mean_best_mae": 0.014371,
+          "ci95": [
+            0.01037,
+            0.016371
+          ],
+          "n_seeds": 3
+        },
+        "f2": {
+          "mean_best_mae": 0.035408,
+          "ci95": null,
+          "n_seeds": 1,
+          "degenerate": "no variation across seeds; this arm is deterministic, so a bootstrap over seeds measures nothing"
+        }
+      },
+      "families_covered": 4,
+      "pass^3": 0.333,
+      "mean_tokens": 31648.7,
+      "claims": [
+        {
+          "id": "claim_0",
+          "statement": "The direct method predicts excited-state energies with 24% less error than the cheap TDDFT approximation on the random split.",
+          "kind": "comparison",
+          "scope": {
+            "split": "random",
+            "target": "E2"
+          },
+          "evidence": [
+            "e_0002"
+          ],
+          "config_a": {
+            "cheap_level": "PBE0-SVP",
+            "method": "cheap",
+            "target": "E2"
+          },
+          "config_b": {
+            "cheap_level": "PBE0-SVP",
+            "method": "direct",
+            "target": "E2"
+          },
+          "control": null
+        },
+        {
+          "id": "claim_0",
+          "statement": "The direct method outperforms the cheap TDDFT approximation for oscillator strengths (f1) on the random split, with a MAE of 0.016371 a.u. versus 0.010683 a.u.",
+          "kind": "comparison",
+          "scope": {
+            "split": "random",
+            "target": "f1"
+          },
+          "evidence": [
+            "e_0001",
+            "e_0003"
+          ],
+          "config_a": {
+            "method": "cheap",
+            "target": "f1"
+          },
+          "config_b": {
+            "method": "direct",
+            "target": "f1"
+          },
+          "control": null
+        },
+        {
+          "id": "claim_0",
+          "statement": "The delta method improves upon the direct method for predicting oscillator strengths (f1) in the random split, with a significant reduction in MAE (0.016371 \u2192 0.01037).",
+          "kind": "comparison",
+          "scope": {
+            "split": "random",
+            "target": "f1"
+          },
+          "evidence": [
+            "e_0001",
+            "e_0003",
+            "e_0005"
+          ],
+          "config_a": {
+            "cheap_level": "CAM",
+            "method": "direct",
+            "target": "f1"
+          },
+          "config_b": {
+            "cheap_level": "CAM",
+            "method": "delta",
+            "target": "f1"
+          },
+          "control": null
+        }
+      ],
+      "stopped": [
+        "claim",
+        "claim",
+        "claim"
+      ]
+    }
+  },
+  "runs": [
+    {
+      "arm": "agent",
+      "seed": 0,
+      "trace": [
+        {
+          "config": {
+            "target": "E1",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          },
+          "mae": 0.229718,
+          "best_so_far": 0.229718
+        },
+        {
+          "config": {
+            "target": "f1",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          },
+          "mae": 0.016371,
+          "best_so_far": 0.016371
+        },
+        {
+          "config": {
+            "target": "E2",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          },
+          "mae": 0.243765,
+          "best_so_far": 0.243765
+        },
+        {
+          "config": {
+            "target": "f2",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          },
+          "mae": 0.035408,
+          "best_so_far": 0.035408
+        }
+      ],
+      "best": {
+        "E1": {
+          "mae": 0.229718,
+          "config": {
+            "target": "E1",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          }
+        },
+        "f1": {
+          "mae": 0.016371,
+          "config": {
+            "target": "f1",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          }
+        },
+        "E2": {
+          "mae": 0.243765,
+          "config": {
+            "target": "E2",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          }
+        },
+        "f2": {
+          "mae": 0.035408,
+          "config": {
+            "target": "f2",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          }
+        }
+      },
+      "tokens": 42064,
+      "stopped_because": "claim",
+      "claim": {
+        "id": "claim_0",
+        "statement": "The direct method predicts excited-state energies with 24% less error than the cheap TDDFT approximation on the random split.",
+        "kind": "comparison",
+        "scope": {
+          "split": "random",
+          "target": "E2"
+        },
+        "evidence": [
+          "e_0002"
+        ],
+        "config_a": {
+          "cheap_level": "PBE0-SVP",
+          "method": "cheap",
+          "target": "E2"
+        },
+        "config_b": {
+          "cheap_level": "PBE0-SVP",
+          "method": "direct",
+          "target": "E2"
+        },
+        "control": null
+      },
+      "log_path": "/Users/raffi/workspace/qm8_research/results/arms/agent_seed0.jsonl"
+    },
+    {
+      "arm": "agent",
+      "seed": 1,
+      "trace": [
+        {
+          "config": {
+            "target": "E1",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          },
+          "mae": 0.229718,
+          "best_so_far": 0.229718
+        },
+        {
+          "config": {
+            "target": "f1",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          },
+          "mae": 0.016371,
+          "best_so_far": 0.016371
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "tddft_gap",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          },
+          "mae": 0.286999,
+          "best_so_far": 0.229718
+        },
+        {
+          "config": {
+            "target": "f1",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "tddft_gap",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          },
+          "mae": 0.024555,
+          "best_so_far": 0.016371
+        }
+      ],
+      "best": {
+        "E1": {
+          "mae": 0.229718,
+          "config": {
+            "target": "E1",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          }
+        },
+        "f1": {
+          "mae": 0.016371,
+          "config": {
+            "target": "f1",
+            "method": "direct",
+            "cheap_level": "PBE0-SVP",
+            "split": "random",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          }
+        }
+      },
+      "tokens": 26505,
+      "stopped_because": "claim",
+      "claim": {
+        "id": "claim_0",
+        "statement": "The direct method outperforms the cheap TDDFT approximation for oscillator strengths (f1) on the random split, with a MAE of 0.016371 a.u. versus 0.010683 a.u.",
+        "kind": "comparison",
+        "scope": {
+          "split": "random",
+          "target": "f1"
+        },
+        "evidence": [
+          "e_0001",
+          "e_0003"
+        ],
+        "config_a": {
+          "method": "cheap",
+          "target": "f1"
+        },
+        "config_b": {
+          "method": "direct",
+          "target": "f1"
+        },
+        "control": null
+      },
+      "log_path": "/Users/raffi/workspace/qm8_research/results/arms/agent_seed1.jsonl"
+    },
+    {
+      "arm": "agent",
+      "seed": 2,
+      "trace": [
+        {
+          "config": {
+            "target": "E1",
+            "method": "direct",
+            "cheap_level": "CAM",
+            "split": "random",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          },
+          "mae": 0.229718,
+          "best_so_far": 0.229718
+        },
+        {
+          "config": {
+            "target": "f1",
+            "method": "direct",
+            "cheap_level": "CAM",
+            "split": "random",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          },
+          "mae": 0.016371,
+          "best_so_far": 0.016371
+        },
+        {
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "CAM",
+            "split": "random",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          },
+          "mae": 0.064849,
+          "best_so_far": 0.064849
+        },
+        {
+          "config": {
+            "target": "f1",
+            "method": "delta",
+            "cheap_level": "CAM",
+            "split": "random",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          },
+          "mae": 0.01037,
+          "best_so_far": 0.01037
+        }
+      ],
+      "best": {
+        "E1": {
+          "mae": 0.064849,
+          "config": {
+            "target": "E1",
+            "method": "delta",
+            "cheap_level": "CAM",
+            "split": "random",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          }
+        },
+        "f1": {
+          "mae": 0.01037,
+          "config": {
+            "target": "f1",
+            "method": "delta",
+            "cheap_level": "CAM",
+            "split": "random",
+            "n_train": 17429,
+            "seed": 0,
+            "speed": "fast"
+          }
+        }
+      },
+      "tokens": 26377,
+      "stopped_because": "claim",
+      "claim": {
+        "id": "claim_0",
+        "statement": "The delta method improves upon the direct method for predicting oscillator strengths (f1) in the random split, with a significant reduction in MAE (0.016371 \u2192 0.01037).",
+        "kind": "comparison",
+        "scope": {
+          "split": "random",
+          "target": "f1"
+        },
+        "evidence": [
+          "e_0001",
+          "e_0003",
+          "e_0005"
+        ],
+        "config_a": {
+          "cheap_level": "CAM",
+          "method": "direct",
+          "target": "f1"
+        },
+        "config_b": {
+          "cheap_level": "CAM",
+          "method": "delta",
+          "target": "f1"
+        },
+        "control": null
+      },
+      "log_path": "/Users/raffi/workspace/qm8_research/results/arms/agent_seed2.jsonl"
+    }
+  ]
+}

@@ -231,12 +231,36 @@ def main() -> int:
     ap.add_argument("--temperature", type=float, default=0.7,
                     help="agent arm only; pass^k is uninformative at 0")
     ap.add_argument("--out", type=Path, default=RESULTS / "arms.json")
+    ap.add_argument("--resume", action="store_true",
+                    help="skip (arm, seed) pairs already present in --out")
     args = ap.parse_args()
 
     arms = [a.strip() for a in args.arms.split(",") if a.strip()]
     runs, t0 = [], time.time()
+
+    # Checkpoint after every run. A long agent sweep gets killed -- by the OOM
+    # killer on a laptop, by a timeout on a cluster -- and losing eight rollouts
+    # because the report is only written at the end is a harness bug, not bad
+    # luck. With --resume the same command picks up where it stopped.
+    done = set()
+    if args.resume and args.out.exists():
+        prev = json.loads(args.out.read_text())
+        runs = prev.get("runs", [])
+        done = {(r["arm"], r["seed"]) for r in runs}
+        print(f"  resuming: {len(done)} run(s) already complete")
+
+    def checkpoint():
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        args.out.write_text(json.dumps(
+            {"budget_per_run": args.budget, "seeds": args.seeds,
+             "temperature": args.temperature, "partial": True,
+             "summary": summarise(runs), "runs": runs},
+            indent=2, default=str) + "\n")
+
     for arm in arms:
         for seed in range(args.seeds):
+            if (arm, seed) in done:
+                continue
             print(f"  {arm} seed={seed} ...", flush=True)
             if arm == "agent":
                 runs.append(run_agent(seed, args.budget, args.temperature))
@@ -244,6 +268,7 @@ def main() -> int:
                 runs.append(ARMS[arm](seed, args.budget))
             else:
                 raise SystemExit(f"unknown arm {arm!r}")
+            checkpoint()
 
     report = {
         "budget_per_run": args.budget,
@@ -253,6 +278,7 @@ def main() -> int:
         "summary": summarise(runs),
         "runs": runs,
     }
+    report["partial"] = False
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(report, indent=2, default=str) + "\n")
 
