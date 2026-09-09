@@ -333,8 +333,14 @@ class LLM:
             else:
                 conv.append({"role": "user", "content": str(m.get("content") or "")})
 
+        # Sonnet 5 and the rest of the current generation removed the sampling
+        # parameters -- temperature/top_p/top_k are rejected outright. That is
+        # not just an API detail: the Qwen arm got its across-seed variation from
+        # temperature 0.7, so this arm has no equivalent knob and its seeds may
+        # collapse to one trajectory. Measured and reported rather than papered
+        # over; see the note in evaluate.py.
         kwargs: dict = {"model": self.model, "max_tokens": self.max_tokens,
-                        "messages": conv, "temperature": self.temperature}
+                        "messages": conv}
         if system:
             kwargs["system"] = system
 
