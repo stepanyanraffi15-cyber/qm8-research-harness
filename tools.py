@@ -1,7 +1,7 @@
 """The agent's action space.
 
-    "A tool is a JSON schema and a function."                 Day 4, slide 10
-    "The description is prompt."                              Day 4, slide 10
+A tool is a JSON schema and a function, and the description is prompt -- it is the
+only thing telling the model when to reach for this rather than something else.
 
 The earlier design offered seven enumerated axes and "a few thousand valid
 combinations". Selecting cells from that is grid search with an LLM prior, and
@@ -21,9 +21,8 @@ So the surface is built from primitives instead:
     claim            the only route to the write-up; ends the run
 
 `propose_features` is deliberately absent. The literature says sandbox code
-execution rather than omit it (TTS slide 151, "SECURITY: the code runs --
-sandbox -- always"), and the counter-evidence for omitting it is heavier than
-the support. Its absence here is a SCOPE decision, not a safety one, and is
+execution rather than omit it, and the counter-evidence for omitting it is
+heavier than the support. Its absence here is a SCOPE decision, not a safety one, and is
 written that way rather than dressed up as principle.
 
 Two honesty notes that belong in the write-up, not buried here:
@@ -499,8 +498,7 @@ def claim(statement: str, kind: str = "comparison", scope: dict | None = None,
           config_b: dict | None = None, control: str | None = None) -> str:
     """Submit a finding to the referee. This ends the run.
 
-    Intercepted by agent.py before dispatch, exactly as `finish` is in the Day 4
-    harness, so it doubles as the stopping rule.
+    Intercepted by agent.py before dispatch, so it doubles as the stopping rule.
     """
     s = session()
     s.claim = {

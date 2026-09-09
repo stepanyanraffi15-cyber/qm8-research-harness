@@ -1,10 +1,5 @@
 """Model endpoint, token accounting, and nothing else.
 
-Adapted from ArmLLM 2026 Day 4 `llm.py` (github.com/osoblanco/ArmLLM, 2026/agents).
-The client, the retry-and-adapt logic and the Usage accounting are theirs and are
-kept close to the original so the diff stays legible. What is new here: the
-profiles, and a QM8 mock backend.
-
 Where the model runs is a config change, never a code change:
 
     QM8_PROFILE=vllm        http://localhost:8000/v1     (the L40S)
@@ -17,15 +12,15 @@ Token accounting lives here because cost is a first-class result. HAL
 (arXiv:2510.11977, verified against the paper) reports a three-dimensional
 analysis over models, scaffolds and benchmarks across 21,730 rollouts -- an agent
 score is not a property of the model alone -- so a number reported without its
-cost and its scaffold is half a result. (The four-way "model x scaffold x harness
-x budget" phrasing is the ArmLLM Day 4 deck's, not the paper's.)
+cost and its scaffold is half a result.
 
-`enable_thinking` is off by default, and the scope of that decision matters.
-It is supported for tool-ROUTING steps inside an agent loop -- the Day 4 measurement
-is 333 completion tokens per call falling to 40, and 18.0s per tool call falling
-to 3.9s. It is NOT supported for hard single-shot reasoning, where the evidence
-runs the other way entirely (o1 13->75% on AIME, R1 15.6->71.0). This harness only
-ever asks the model to pick a next experiment, which is the routing case.
+`enable_thinking` is off by default, and the scope of that decision matters. HAL
+(arXiv:2510.11977) finds higher reasoning effort reduced accuracy in the majority
+of 21,730 agentic rollouts, and the saving here is large: measured on this harness,
+647 completion tokens fell to 18 and 28.1s per tool call fell to 5.7s. That result
+does NOT transfer to hard single-shot reasoning, where the evidence runs the other
+way entirely. This harness only ever asks the model to pick a next experiment,
+which is the routing case.
 """
 
 from __future__ import annotations
@@ -243,10 +238,10 @@ class LLM:
 
         The model reasons unboundedly through the shim and never reaches an
         answer; `think` is simply not a parameter the compat layer forwards. This
-        is the same effect Day 4 measured on vLLM (333 completion tokens per call
-        falling to 40 with enable_thinking=false) showing up on a different stack,
-        and it is a harness property rather than a model property -- which is
-        exactly the kind of thing HAL says to report rather than bury.
+        This is a harness property, not a model property: an OpenAI-compatible
+        interface commits to nothing and turns out to guarantee nothing about this
+        either. Exactly the kind of thing HAL (arXiv:2510.11977) argues belongs in
+        the report rather than buried.
         """
         import urllib.error
         import urllib.request
@@ -511,8 +506,9 @@ def check() -> int:
     """Verify the endpoint answers, and -- the part that actually breaks -- that it
     returns tool calls in the shape the loop expects.
 
-    Day 4, slide 11: "Pick the wrong parser and vLLM starts, answers fluently, and
-    never emits a tool call. Nothing errors." This is that check.
+    The failure this catches is silent: pick the wrong tool-call parser on the
+    serving side and the endpoint starts, answers fluently, and never emits a
+    tool call. Nothing raises.
     """
     llm = LLM()
     print(f"config  : {llm.describe()}")

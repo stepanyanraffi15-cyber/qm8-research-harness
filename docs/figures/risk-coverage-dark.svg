@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 380" width="720" height="380" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">
+<rect width="720" height="380" fill="#1a1a19"/>
+<text x="62" y="20" font-size="14" font-weight="600" fill="#ffffff">Abstention beats random rejection at every coverage</text>
+<text x="62" y="368" font-size="11" fill="#82817a">coverage — fraction of molecules kept (f1, delta, random split)</text>
+<line x1="62" y1="295.3" x2="570" y2="295.3" stroke="#2c2c2a" stroke-width="1"/>
+<text x="54" y="299.3" font-size="10.5" text-anchor="end" fill="#82817a">0.008</text>
+<line x1="62" y1="230.0" x2="570" y2="230.0" stroke="#2c2c2a" stroke-width="1"/>
+<text x="54" y="234.0" font-size="10.5" text-anchor="end" fill="#82817a">0.010</text>
+<line x1="62" y1="164.7" x2="570" y2="164.7" stroke="#2c2c2a" stroke-width="1"/>
+<text x="54" y="168.7" font-size="10.5" text-anchor="end" fill="#82817a">0.012</text>
+<line x1="62" y1="99.3" x2="570" y2="99.3" stroke="#2c2c2a" stroke-width="1"/>
+<text x="54" y="103.3" font-size="10.5" text-anchor="end" fill="#82817a">0.014</text>
+<line x1="62" y1="34.0" x2="570" y2="34.0" stroke="#2c2c2a" stroke-width="1"/>
+<text x="54" y="38.0" font-size="10.5" text-anchor="end" fill="#82817a">0.016</text>
+<text x="10" y="26" font-size="10.5" fill="#82817a">MAE (a.u.)</text>
+<text x="62.0" y="346" font-size="10.5" text-anchor="middle" fill="#82817a">100%</text>
+<text x="163.6" y="346" font-size="10.5" text-anchor="middle" fill="#82817a">90%</text>
+<text x="265.2" y="346" font-size="10.5" text-anchor="middle" fill="#82817a">80%</text>
+<text x="366.8" y="346" font-size="10.5" text-anchor="middle" fill="#82817a">70%</text>
+<text x="468.4" y="346" font-size="10.5" text-anchor="middle" fill="#82817a">60%</text>
+<text x="570.0" y="346" font-size="10.5" text-anchor="middle" fill="#82817a">50%</text>
+<polygon points="62.0,150.2 163.6,138.3 265.2,131.8 366.8,124.4 468.4,119.5 570.0,111.1 570.0,190.7 468.4,183.0 366.8,177.3 265.2,170.8 163.6,164.9 62.0,150.2" fill="#d95926" opacity="0.16"/>
+<polyline points="62.0,150.2 163.6,150.0 265.2,150.3 366.8,149.8 468.4,150.3 570.0,150.7" fill="none" stroke="#d95926" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="62.0" cy="150.2" r="4" fill="#d95926" stroke="#1a1a19" stroke-width="2"/>
+<circle cx="163.6" cy="150.0" r="4" fill="#d95926" stroke="#1a1a19" stroke-width="2"/>
+<circle cx="265.2" cy="150.3" r="4" fill="#d95926" stroke="#1a1a19" stroke-width="2"/>
+<circle cx="366.8" cy="149.8" r="4" fill="#d95926" stroke="#1a1a19" stroke-width="2"/>
+<circle cx="468.4" cy="150.3" r="4" fill="#d95926" stroke="#1a1a19" stroke-width="2"/>
+<circle cx="570.0" cy="150.7" r="4" fill="#d95926" stroke="#1a1a19" stroke-width="2"/>
+<text x="578" y="154.7" font-size="12" font-weight="600" fill="#d95926">random 0.01243</text>
+<polyline points="62.0,150.2 163.6,186.6 265.2,209.4 366.8,235.2 468.4,257.3 570.0,277.2" fill="none" stroke="#3987e5" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="62.0" cy="150.2" r="4" fill="#3987e5" stroke="#1a1a19" stroke-width="2"/>
+<circle cx="163.6" cy="186.6" r="4" fill="#3987e5" stroke="#1a1a19" stroke-width="2"/>
+<circle cx="265.2" cy="209.4" r="4" fill="#3987e5" stroke="#1a1a19" stroke-width="2"/>
+<circle cx="366.8" cy="235.2" r="4" fill="#3987e5" stroke="#1a1a19" stroke-width="2"/>
+<circle cx="468.4" cy="257.3" r="4" fill="#3987e5" stroke="#1a1a19" stroke-width="2"/>
+<circle cx="570.0" cy="277.2" r="4" fill="#3987e5" stroke="#1a1a19" stroke-width="2"/>
+<text x="578" y="281.2" font-size="12" font-weight="600" fill="#3987e5">selective 0.00856</text>
+<text x="578" y="170.7" font-size="10.5" fill="#82817a">band = random 95% CI</text>
+<text x="72" y="314" font-size="11" fill="#ffffff">−31% error at half coverage, with no CC2 required</text>
+</svg>

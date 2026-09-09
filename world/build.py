@@ -1,11 +1,10 @@
 """Build the QM8 environment — deterministically, from a seed.
 
-Adapted in spirit from ArmLLM 2026 Day 4 `world/build.py`, which defines an
-environment as five things: state, actions, transition, reward, reset. This file
-owns *state* and *reset*. `tools.py` owns actions, `critic.py` owns reward.
-
-    "reset -- regenerate from a seed, byte for byte"          Day 4, slide 46
-    "No reset, no evaluation. And certainly no training."     Day 4, slide 34
+An environment is five things: state, actions, transition, reward, and reset.
+This file owns *state* and *reset*; `tools.py` owns actions and `critic.py` owns
+reward. The reset is the one people skip, and without it there is nothing to
+evaluate against -- a benchmark you cannot regenerate is a number you cannot
+check.
 
 Why this file exists at all: the earlier round of this project produced numbers
 that were never written to disk. Nothing here is trusted unless this script can

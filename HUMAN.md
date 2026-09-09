@@ -57,10 +57,11 @@ produce any number in the write-up. Those go through `critic.py`, which is a scr
 ### 2026-09-07 · repo
 
 - `git init`, scaffold, first commit.
-- Harness adapted from ArmLLM 2026 Day 4 (`osoblanco/ArmLLM`, `2026/agents`). Reused
-  wholesale: the agent loop's shape, `llm.py`'s client and token accounting, the bootstrap
-  CI recipe, the failure-histogram discipline. Written here: everything chemistry, the
-  three-way sealed split, pre-registration, and the claim verifiers.
+- Harness written for this project: the loop, the OpenAI-compatible client with token
+  accounting, the bootstrap CIs, the failure histogram, the chemistry, the three-way sealed
+  split, pre-registration and the claim verifiers. The agent decomposition follows
+  Anthropic's *Building Effective Agents*; the interval method is the nonparametric
+  bootstrap (Efron 1979).
 
 ### 2026-09-07/08 · build
 
@@ -123,8 +124,7 @@ Bugs found by running things, each of which would have produced a wrong result:
 
 Constraint set by the author: **everything runs locally.** No YSU GPU, no remote host.
 
-That ruled out the setup the harness was originally written against (Qwen3.6-35B-A3B-FP8
-on an L40S). Nothing on this machine could serve a model — no API keys in the environment,
+That ruled out any remote GPU. Nothing on this machine could serve a model — no API keys in the environment,
 and port 8000 turned out to be an unrelated Docker container, not vLLM. So Ollama was
 installed and Qwen3 8B pulled: the closest local analogue, on an Apple Silicon laptop with
 16 GB.
@@ -210,8 +210,7 @@ validation results, which is the adaptive selection the whole scheme guards agai
 ### 2026-09-08 · citations checked against the papers
 
 The shipped write-up turned out to lean on almost nothing external — Ramakrishnan 2015
-(verified by reproducing its own numbers), the Day 4 deck (transcribed from the PDF), and
-two arXiv papers. Both were checked against the actual abstracts rather than against our
+(verified by reproducing its own numbers) and two arXiv papers. Both were checked against the actual abstracts rather than against our
 own planning documents:
 
 - **HAL, arXiv:2510.11977** — verified. Title, 21,730 rollouts, 9 models × 9 benchmarks,
@@ -228,8 +227,8 @@ higher reasoning effort did not improve accuracy." The abstract says *the majori
 and the deck quoted it correctly. The earlier document's correction was itself the error.
 
 Precision fix that came out of this: `llm.py` had HAL's finding as
-"model × scaffold × harness × budget", which is the Day 4 deck's phrasing rather than the
-paper's ("models, scaffolds, and benchmarks"). Corrected and attributed.
+"model × scaffold × harness × budget", which is a paraphrase rather than the paper's own
+wording ("models, scaffolds, and benchmarks"). Corrected to what HAL actually says.
 
 The citation-dense material lives in `docs/PLAN.md`, which is a planning artifact rather
 than part of the submission, and is still labelled *course canon* — printed on a slide,

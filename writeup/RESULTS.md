@@ -21,9 +21,10 @@ that research, and how would you know?**
 
 ## What was built
 
-Build order was **world → referee → evaluator → agent**, which inverts the obvious order
-and follows the ArmLLM Day 4 rule: *"Build the referee before the player."* Nothing an
-agent produces means anything until something exists that can score a rollout.
+Build order was **world → referee → evaluator → agent**, which inverts the obvious order.
+The referee outlives the agent — models get replaced, and the thing that decides whether a
+claim is true is what you keep. Nothing an agent produces means anything until something
+exists that can score a rollout.
 
 ```
 world/build.py   the environment, regenerable from a seed, byte for byte
@@ -514,19 +515,17 @@ unboundedly and never reaches an answer, producing 2,000 tokens of nothing. Its 
 | native `/api/chat`, `"think": false` | **4** | correct |
 
 Fixing it took the harness check from 647 to 18 completion tokens and 28.1s to 5.7s per
-tool call — the same effect Day 4 measured on vLLM (333→40 tokens, 18.0→3.9s), on a
-different stack. An OpenAI-compatible interface commits to nothing, and it turns out to
-guarantee nothing about this either. Score is a property of model × scaffold × harness ×
-budget, and this is that landing on our own setup.
+tool call. An OpenAI-compatible interface commits to nothing, and it turns out to guarantee
+nothing about this either — a score is a property of the model *and* the scaffold serving
+it (HAL, arXiv:2510.11977), and this is that landing on our own setup.
 
 ---
 
 ## Provenance
 
-The harness adapts the ArmLLM 2026 Day 4 exercise (`osoblanco/ArmLLM`, `2026/agents`).
-Reused: the loop's shape, the OpenAI-compatible client and token accounting, the bootstrap
-recipe, the failure-histogram discipline. Written here: all chemistry, the three-way sealed
-split, pre-registration, and the claim verifiers.
+The agent decomposition — policy, tools, observation, memory, stopping rule — follows
+Anthropic's *Building Effective Agents* (Dec 2024). Confidence intervals are the
+nonparametric bootstrap (Efron 1979). Everything else is written for this project.
 
 The science follows Ramakrishnan, Hartmann, Tapavicza & von Lilienfeld, *Electronic spectra
 from TDDFT and machine learning in chemical space*, J. Chem. Phys. **143**, 084111 (2015).

@@ -1,9 +1,7 @@
 """The referee. Deterministic, and never an LLM.
 
-    "verify.py is 120 lines. It is worth more than the agent: the agent is a
-     checkpoint that expires."                              Day 4, slide 35
-
-    "judge -- last resort, now you have two things to validate"   slide 35
+The referee outlives the agent. Models get replaced; the thing that decides whether
+a claim is true is what you keep, which is why it is built first and kept small.
 
 An LLM judge is refused here for a specific measured reason, not on taste:
 ChemCrow found GPT-4 could not separate confidently-wrong chemistry from correct
@@ -63,9 +61,8 @@ ALPHA = 0.05
 
 SIGNED, NARROWED, REJECTED = "signed", "narrowed", "rejected"
 
-# Failure labels, the QM8 analogue of Day 4's stale / hallucinated /
-# abstained_on_answerable / gave_up / wrong_number. A pass rate tells you
-# nothing; a histogram of these tells you what to fix.
+# Failure labels. A pass rate tells you nothing about what to fix; a histogram of
+# named failure modes does, which is why every rejection carries one.
 FAILURES = [
     "unsupported_claim",
     "noise_as_signal",
@@ -87,8 +84,8 @@ def paired_bootstrap(
 ) -> dict:
     """95% CI on mean(|err_a| - |err_b|), resampling molecules.
 
-    Same resampling shape as ArmLLM's bootstrap_ci, but on a paired difference
-    rather than a proportion. Pairing matters: the two configs are scored on the
+    The nonparametric bootstrap (Efron 1979), on a paired difference rather than
+    a proportion. Pairing matters: the two configs are scored on the
     same molecules, so the between-molecule variance -- which is most of the
     spread -- cancels. An unpaired comparison of two MAEs throws that away and
     calls real effects noise.

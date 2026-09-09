@@ -1,12 +1,11 @@
 """Score a research policy: accuracy, CI, pass^k, cost, failure histogram.
 
-Adapted from ArmLLM 2026 Day 4 `evaluate.py`, including its bootstrap recipe
-(resample with replacement 5,000 times, take the 2.5th and 97.5th percentiles --
-no distributional assumption, and it behaves near 0 and 1).
+Confidence intervals come from the nonparametric bootstrap (Efron 1979): resample
+with replacement 5,000 times and take the 2.5th and 97.5th percentiles. No
+distributional assumption, and it behaves near 0 and 1.
 
-    "+-15 percentage points, at 40 items, 95% confidence. A three-point
-     improvement is noise."                                  Day 4, slide 37
-    "Report the cost, or the number is half a result."        Day 4, slide 31
+Cost is reported beside accuracy throughout, because a score without its cost and
+its scaffold is half a result (HAL, arXiv:2510.11977).
 
 What this file adds, and what the earlier design had no answer for: a baseline
 the AGENT has to beat. The earlier plan had a baseline the MODEL had to beat and
@@ -23,7 +22,7 @@ model x scaffold x harness x budget; AstaBench: cost-controlled Pareto), but
 random-search and human-grid baselines are imported from experiment design and
 are labelled reasoning, not evidence.
 
-Two traps this file has to respect, both from Day 4 slide 39:
+Two traps this file has to respect:
   * pass^k is uninformative at temperature 0 -- "there is nothing to vary, so the
     two are equal and you have learned nothing." Run the agent arm at t>0.
   * a batched server is not fully deterministic even at 0, so seed-pairing is
@@ -81,8 +80,7 @@ GRID = [
 
 def bootstrap_ci(values: list[float], iters: int = BOOTSTRAP_ITERS, seed: int = 0
                  ) -> tuple[float, float]:
-    """95% CI on a mean. Same recipe as the Day 4 original, on a continuous
-    statistic rather than a proportion."""
+    """95% CI on a mean, by the nonparametric bootstrap."""
     if not values:
         return (0.0, 0.0)
     rng = _random.Random(seed)

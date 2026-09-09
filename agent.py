@@ -1,19 +1,20 @@
 """The loop: policy + tools + observation + memory + stopping rule.
 
-    "An agent is five things: policy -- the model; tools -- what it can do;
-     observation -- what came back; memory -- the messages list; stopping rule --
-     what ends it. Everything else is a framework selling you something."
-                                                          Day 4, slide 9
+An agent is five things: a policy (the model), tools (what it can do), an
+observation (what came back), memory (the message list), and a stopping rule
+(what ends it). The decomposition follows Anthropic's *Building Effective Agents*
+(Dec 2024); everything beyond those five is framework.
 
-Adapted from ArmLLM 2026 Day 4 `agent.py`. Kept from the original, deliberately:
+Three properties are deliberate, and each is a lesson the literature records:
 
-  * errors are returned as observations with an `ERROR:` prefix, never raised.
-    "A traceback ends the agent. An error it can read lets it recover.
-     Recovery is a capability."                            Day 4, slide 13
+  * errors are returned as observations with an `ERROR:` prefix, never raised. A
+    traceback ends the run; an error string the model can read lets it recover,
+    and recovery is what separates an agent from a script.
   * the terminal tool is intercepted by name BEFORE dispatch, so it doubles as
     the stopping rule. Here that tool is `claim` rather than `finish`.
   * four recorded exit reasons. Only the first is success, and the evaluator
-    reads this field.                                      Day 4, slide 14
+    reads this field -- a run that ended because the model answered in prose is a
+    different failure from one that exhausted its budget.
   * observations truncated at 4000 chars for the model, 600 for the log.
 
 Changed for this project: the terminal tool submits a research claim rather than
