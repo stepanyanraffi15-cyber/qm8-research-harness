@@ -222,8 +222,8 @@ def risk_coverage(p: np.ndarray, n_boot: int = 2000) -> dict:
 _SCORES: dict = {}
 
 
-def sealed_risk_scores(level: str = CHEAP_LEVEL, split: str = SPLIT) -> np.ndarray:
-    """Predicted misordering risk for the sealed test partition.
+def _risk_scores(part: str, level: str, split: str) -> np.ndarray:
+    """Predicted misordering risk for one partition, classifier fit on `train`.
 
     Memoized because the fit is deterministic and target-independent -- the
     label is "did the two states swap", which is a property of the molecule, so
@@ -232,20 +232,26 @@ def sealed_risk_scores(level: str = CHEAP_LEVEL, split: str = SPLIT) -> np.ndarr
     """
     import lightgbm as lgb
 
-    if (level, split) in _SCORES:
-        return _SCORES[(level, split)]
+    key = (part, level, split)
+    if key in _SCORES:
+        return _SCORES[key]
 
     env = models._env()
     X, pos = env["X"], env["positions"]
     parts = models._split(split)
-    tr, te = parts["train"], parts["sealed_test"]
+    tr, ev = parts["train"], parts[part]
     y = misordered_labels(level)
 
     clf = lgb.LGBMClassifier(n_estimators=300, learning_rate=0.05, num_leaves=31,
                              random_state=0, n_jobs=-1, verbose=-1, force_row_wise=True)
     clf.fit(X[pos[tr]], y[tr])
-    _SCORES[(level, split)] = clf.predict_proba(X[pos[te]])[:, 1]
-    return _SCORES[(level, split)]
+    _SCORES[key] = clf.predict_proba(X[pos[ev]])[:, 1]
+    return _SCORES[key]
+
+
+def sealed_risk_scores(level: str = CHEAP_LEVEL, split: str = SPLIT) -> np.ndarray:
+    """Predicted misordering risk for the sealed test partition."""
+    return _risk_scores("sealed_test", level, split)
 
 
 def risk_coverage_sealed(target: str = TARGET, n_boot: int = 2000) -> dict:
@@ -476,6 +482,43 @@ def selective_battery(target: str = TARGET, level: str = CHEAP_LEVEL, split: str
         else {"applicable": False,
               "note": f"a brightness threshold is meaningless for {target}; "
                       f"every molecule clears {BRIGHT} eV"}
+    return out
+
+
+def classifier_vs_free_gap(target: str = TARGET, level: str = CHEAP_LEVEL, split: str = SPLIT,
+                           coverage: float = 0.5) -> dict:
+    """The classifier against the free cheap-gap rule, on BOTH partitions.
+
+    An external review reported E1 as surviving the retraction, with the
+    classifier at 0.05182 against the free gap rule's 0.05749. Those are
+    VALIDATION numbers -- the same partition that produced the 31% headline this
+    project already withdrew. On the sealed partition the ordering reverses. So
+    the comparison is computed side by side rather than argued about: whoever
+    reads the write-up can see that the disagreement is a val->test gap and not a
+    difference of method.
+    """
+    out = {}
+    for part in ("validation", "sealed_test"):
+        kw = {"audit_token": models.AUDIT_TOKEN} if part == "sealed_test" else {}
+        r = models.run(target=target, method="delta", cheap_level=level, split=split,
+                       speed="full", eval_on=part, return_errors=True, **kw)
+        err = r.errors
+        k = max(1, int(round(coverage * len(err))))
+        rows = _rows(part, split)
+        T = models._env()["targets"]
+        gap = -(T[rows, _col("E2", level)] - T[rows, _col("E1", level)])
+        p = _risk_scores(part, level, split)
+        sel = lambda risk: round(float(err[np.argsort(risk)[:k]].mean()), 6)  # noqa: E731
+        out[part] = {
+            "n_eval": int(len(err)),
+            "full_mae": round(r.mae, 6),
+            "classifier": sel(p),
+            "cheap_gap": sel(gap),
+        }
+        out[part]["classifier_wins"] = bool(out[part]["classifier"] < out[part]["cheap_gap"])
+    out["ordering_reverses_val_to_sealed"] = bool(
+        out["validation"]["classifier_wins"] != out["sealed_test"]["classifier_wins"]
+    )
     return out
 
 

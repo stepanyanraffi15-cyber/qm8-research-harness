@@ -426,6 +426,26 @@ class Critic:
                 "detail": (f"coin-flip control AUC {stat['control_auc']:.4f} "
                            f"CI {stat['control_auc_ci']}"),
             }
+            # Check 9, in two halves. A rule can fail either without failing the
+            # other, and they are not the same finding: losing to a free rule
+            # means the features bought nothing, while sitting inside the
+            # stratified null means the rule was never ranking error at all.
+            v.checks["free_baselines"] = {
+                "passed": stat["beats_free_baselines"],
+                "detail": (f"proposed rule {stat['selective_mae']:.6f} vs best free rule "
+                           f"{stat['best_free']['name']} "
+                           f"{stat['best_free']['selective_mae']:.6f}"),
+            }
+            v.checks["magnitude_control"] = {
+                "passed": stat["beats_stratified_null"],
+                "detail": stat["stratified_summary"],
+            }
+            # The full battery rides along, the way `scope` carries its observed
+            # values: a verdict that only asserts a rule lost cannot be checked
+            # without re-running the referee.
+            v.checks["rival_risk_rules"] = {"passed": True, "detail": stat["rival_summary"],
+                                            "battery": stat["battery"]}
+
             if not stat["beats_random"]:
                 v.verdict = REJECTED
                 v.reasons.append(
@@ -438,6 +458,24 @@ class Critic:
                     f"no_control: the coin-flip control also separates "
                     f"(AUC {stat['control_auc']:.3f}), so the signal is not misordering"
                 )
+            else:
+                if not stat["beats_stratified_null"]:
+                    v.verdict = REJECTED
+                    b = stat["battery"]["magnitude_stratified"]
+                    v.reasons.append(
+                        f"magnitude_artifact: with |{stat['target']}| held fixed within "
+                        f"quintiles the rule scores {b['selective_mae']:.6f} against a "
+                        f"stratified null of {b['null_ci95']} -- it is ranking magnitude "
+                        f"(Spearman {stat['battery']['spearman_risk_vs_target']:+.3f}), "
+                        f"not error"
+                    )
+                if not stat["beats_free_baselines"]:
+                    v.verdict = REJECTED
+                    v.reasons.append(
+                        f"free_baseline_dominates: {stat['best_free']['name']} costs nothing "
+                        f"and scores {stat['best_free']['selective_mae']:.6f} against the "
+                        f"proposed rule's {stat['selective_mae']:.6f}"
+                    )
             return v
 
         if claim.get("kind") == "comparison":
