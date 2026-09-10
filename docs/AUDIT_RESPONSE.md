@@ -84,9 +84,16 @@ survives all of them; otherwise it ships as exploratory with its failures stated
 
 Every item here is a place the repo contradicts itself.
 
-- [ ] Replace 31% → **20.6%** and 24% → **17.4%** in `README.md`, `writeup/RESULTS.md`, and
+- [x] Replace 31% → **20.6%** and 24% → **17.4%** in `README.md`, `writeup/RESULTS.md`, and
       **the SVG figure**, which currently plots the validation series.
-- [ ] Move "sealed-set verified" so it sits beside sealed numbers, never validation ones.
+      *Done. `analysis/misorder_signature.py::risk_coverage_sealed` regenerates the curve on
+      `sealed_test` with the classifier fit on `train` alone — same construction as
+      `critic._sealed_selective`, so its 50% row reproduces the referee's 0.011080 exactly.
+      Written to `results/risk_coverage_sealed.json`; `analysis/figures.py` now reads that file
+      and refuses to plot anything whose `eval_on` is not `sealed_test`.*
+- [x] Move "sealed-set verified" so it sits beside sealed numbers, never validation ones.
+      *Done. The validation curve is still reported in `RESULTS.md`, explicitly labelled, as the
+      val→test gap — never as the headline.*
 - [ ] `pyproject.toml`: add `[build-system]` + explicit `py-modules`, so step 1 of *Reproduce it*
       actually runs. Verify in a clean venv.
 - [ ] **Globally-unique experiment ids** (`tools.py:83`) — run-scoped prefix, not `len(entries)`.

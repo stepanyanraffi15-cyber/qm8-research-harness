@@ -54,7 +54,7 @@ without an audit token that nothing importable from `tools.py` holds.
 
 | # | Finding | Status |
 |---|---|---|
-| A | **Misordering is predictable from structure alone**, giving an abstention rule that needs no CC2. AUC 0.693, error 3.52× higher in the top risk quartile, beats random rejection at every coverage. | **pre-registered · signed on the sealed set · confirmatory** |
+| A | **Misordering is predictable from structure alone**, giving an abstention rule that needs no CC2. AUC 0.693, error 3.52× higher in the top risk quartile, beats random rejection at every coverage — **20.6% lower error at half coverage on the sealed set** (17.4% on E1). | **pre-registered · signed on the sealed set · confirmatory** |
 | B | **174× label efficiency** — Δ-learning on 100 CC2 labels beats direct learning on all 17,429. | measured, 3 seeds |
 | C | **Δ-learning's real value is robustness, not accuracy** — under scaffold shift direct learning is worse than doing nothing; Δ is not. | measured |
 | D | **MoleculeNet's `qm8.csv` ships 12 tasks under 16 headers.** One level of theory is a verbatim duplicate. | verified upstream |
@@ -358,23 +358,38 @@ predicted risk monotonically across all four quartiles:
 **3.52× between highest and lowest, CI [2.85, 4.32].**
 
 Which makes the risk–coverage curve computable, against the only baseline that
-means anything — random rejection at matched coverage:
+means anything — random rejection at matched coverage. **On the sealed test set**
+(`results/risk_coverage_sealed.json`, the file the README figure plots):
 
-| coverage | selective MAE | random MAE | random 95% CI | beats random |
-|---:|---:|---:|---|---|
-| 100% | 0.01244 | 0.01244 | — | — |
-| 90% | 0.01133 | 0.01245 | [0.01199, 0.01281] | yes |
-| 80% | 0.01063 | 0.01244 | [0.01181, 0.01301] | yes |
-| 70% | 0.00984 | 0.01245 | [0.01161, 0.01323] | yes |
-| 60% | 0.00916 | 0.01244 | [0.01144, 0.01338] | yes |
-| 50% | 0.00856 | 0.01243 | [0.01120, 0.01364] | yes |
+| coverage | n kept | selective MAE | random MAE | random 95% CI | beats random |
+|---:|---:|---:|---:|---|---|
+| 100% | 2178 | 0.013946 | 0.013946 | — | — |
+| 90% | 1960 | 0.012988 | 0.013948 | [0.013394, 0.014395] | yes |
+| 80% | 1742 | 0.012236 | 0.013942 | [0.013176, 0.014634] | yes |
+| 70% | 1525 | 0.011817 | 0.013932 | [0.012892, 0.014887] | yes |
+| 60% | 1307 | 0.011370 | 0.013966 | [0.012752, 0.015177] | yes |
+| 50% | 1089 | 0.011080 | 0.013976 | [0.012422, 0.015417] | yes |
 
-At half coverage the error falls **31%** while random rejection stays flat.
+At half coverage the error falls **20.6%** while random rejection stays flat, and
+selective error sits below the random 95% interval at every level.
+
+The classifier here is fit on `train` alone and scores a partition it has never
+seen, exactly as `critic.py::_sealed_selective` does — so the curve and the
+referee's verdict cannot disagree, and the 50% row is the referee's number to six
+decimals.
+
+**The same curve on validation is more optimistic: 0.01244 → 0.00856, a 31% drop**
+(`results/risk_coverage.json`). That 31% is not a result this project reports. It
+was the README headline until the audit, sitting four lines above the words
+"sealed-set verified", and the gap between it and the 20.6% above is the val→test
+gap that every other number here is also subject to.
 
 #### Where it works, and where it does not
 
 The rule was built on `f1`. Testing whether it transfers — **exploratory, run only after f1
-worked, and labelled as such**:
+worked, and labelled as such**. This screen runs **on validation**, because screening four
+targets to find the two that work is exactly the kind of search the sealed set is protected
+from; only the two survivors were then scored on it:
 
 | target | full MAE | selective @50% | beats random | risk-quartile ratio |
 |---|---:|---:|:---:|---:|
@@ -383,8 +398,8 @@ worked, and labelled as such**:
 | f2 (a.u.) | 0.02932 | 0.02793 | no | 1.39× |
 | E2 (eV) | 0.13084 | 0.13586 | no | 0.94× |
 
-**It transfers to E1 — a 24% error reduction at half coverage on the project's primary
-target — and fails on both second states.**
+**It transfers to E1 — a 17.4% error reduction at half coverage on the project's primary
+target, 0.072082 → 0.059528 on the sealed set — and fails on both second states.**
 
 The mechanism is coherent rather than convenient. A swapped assignment corrupts state 1 and
 state 2 alike, but the second states are intrinsically much harder to predict (0.131 eV
@@ -413,8 +428,8 @@ Both state-1 targets were put through it:
 control   coin-flip classifier AUC 0.4862  CI [0.4532, 0.518]  -> null
 ```
 
-Selective error falls below the random-rejection interval in both cases — 21% lower on f1,
-17% on E1 — with the registered control clean.
+Selective error falls below the random-rejection interval in both cases — **20.6% lower on
+f1, 17.4% on E1** — with the registered control clean.
 
 The two verdicts differ in kind, and the difference is not cosmetic. **f1 is confirmatory**:
 registered before measurement. **E1 is exploratory**: it was tested only after f1 worked, so
@@ -422,7 +437,8 @@ it cannot be confirmatory no matter how good the number is, and the referee type
 way automatically because it is absent from `preregister.json`.
 
 Note the honest val→test gap: full-coverage error is 0.0139 on the sealed set
-against 0.0124 on validation. The selective advantage survives it.
+against 0.0124 on validation, and the reduction at half coverage goes 31% → 20.6%
+with it. The selective advantage survives; the headline number is the sealed one.
 
 This is the part that maps onto screening novel chemistry rather than onto a
 benchmark: a model that declines on the compounds it is about to get wrong, from

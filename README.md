@@ -42,16 +42,23 @@ early: 2,500 → 17,429 labels is roughly seven times the CC2 compute for 0.011 
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/figures/risk-coverage-dark.svg">
-  <img alt="Risk-coverage curve: selective prediction falls from 0.01244 to 0.00856 as coverage drops from 100 to 50 percent, while random rejection stays flat at 0.01243 with a widening confidence band." src="docs/figures/risk-coverage-light.svg">
+  <img alt="Risk-coverage curve on the sealed test set: selective prediction falls from 0.01395 to 0.01108 as coverage drops from 100 to 50 percent, while random rejection stays flat at 0.01398 with a widening confidence band." src="docs/figures/risk-coverage-light.svg">
 </picture>
 
 TDDFT and CC2 disagree about **which excited state is which** for 16.4% of molecules. A classifier
 using *structure alone* predicts that disagreement (AUC 0.693), and abstaining on the molecules it
-flags cuts error **31% at half coverage**, beating random rejection at every level.
+flags cuts error **20.6% at half coverage on the sealed test set** (0.013946 → 0.011080), beating
+random rejection at every level. It transfers to E1, the project's primary target: **17.4%**
+(0.072082 → 0.059528), also sealed.
 
 This is the commercially useful one: every other result here needs CC2 to know a molecule is
 misordered, which is useless when CC2 is the thing you are avoiding. This needs only the structure.
 **Pre-registered before measurement, sealed-set verified, control clean.**
+
+Every number in this section is the sealed one. The validation curve is more flattering — 31% at
+half coverage — and an earlier version of this README quoted it under the "sealed-set verified"
+line above. It was a validation number wearing a sealed label; see
+[`docs/AUDIT_RESPONSE.md`](docs/AUDIT_RESPONSE.md).
 
 ### 3. MoleculeNet's QM8 distribution is damaged
 
@@ -141,11 +148,11 @@ flowchart LR
     TR["train · 17,429"] --> P["PROPOSER (LLM)
 run_experiment · slice_error
 run_control · intervene · claim"]
-    VA["validation · 2,178"] --> P
+    VA["validation · 2,179"] --> P
   end
   P -- "claim + evidence ids" --> C["CRITIC (deterministic)
 8 checks · 3 verdicts"]
-  ST["SEALED TEST · 2,179"] -- "scored once per claim" --> C
+  ST["SEALED TEST · 2,178"] -- "scored once per claim" --> C
   C -- "signed / narrowed / rejected" --> W["WRITER
 cites signed claims only"]
 ```
@@ -233,7 +240,7 @@ QM8_PROFILE=mock python agent.py
 
 ```
 world/build.py        the environment — resets byte-for-byte from a seed
-                      splits: train 17,429 / validation 2,178 / SEALED 2,179, SHA-256 each
+                      splits: train 17,429 / validation 2,179 / SEALED 2,178, SHA-256 each
 features.py models.py Morgan r=2 + 12 named descriptors; cheap / direct / delta / zero
 tools.py              the action space — primitives, not a config grid
 agent.py llm.py       the loop; ollama · anthropic · openrouter · mock

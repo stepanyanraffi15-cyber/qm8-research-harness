@@ -151,10 +151,6 @@ def main() -> int:
     return 0
 
 
-if __name__ == "__main__":
-    raise SystemExit(main())
-
-
 # --------------------------------------------------------------------------
 # The deliverable this was always for: a risk-coverage curve.
 # --------------------------------------------------------------------------
@@ -166,15 +162,23 @@ if __name__ == "__main__":
 # throwing 30% away at random.
 
 
-def risk_coverage(p: np.ndarray, n_boot: int = 2000) -> dict:
-    r = models.run(target=TARGET, method="delta", cheap_level=CHEAP_LEVEL, split=SPLIT,
-                   speed="full", eval_on="validation", return_errors=True)
-    err = r.errors
+COVERAGES = (1.0, 0.9, 0.8, 0.7, 0.6, 0.5)
+
+
+def _curve(err: np.ndarray, p: np.ndarray, n_boot: int) -> dict:
+    """Error against coverage, with random rejection at matched coverage.
+
+    `err` and `p` must be aligned to the SAME partition: p[i] is the predicted
+    risk of the molecule whose delta-model error is err[i]. Getting that wrong is
+    how a validation curve ends up labelled as a sealed one.
+    """
+    if len(err) != len(p):
+        raise ValueError(f"errors ({len(err)}) and risks ({len(p)}) are different partitions")
     order = np.argsort(p)          # keep the lowest-risk molecules first
     rng = np.random.default_rng(0)
 
     rows = []
-    for cov in (1.0, 0.9, 0.8, 0.7, 0.6, 0.5):
+    for cov in COVERAGES:
         k = max(1, int(round(cov * len(err))))
         selective = float(err[order[:k]].mean())
         # random rejection at the SAME coverage, bootstrapped
@@ -192,3 +196,70 @@ def risk_coverage(p: np.ndarray, n_boot: int = 2000) -> dict:
     aurc = float(np.mean([x["selective_mae"] for x in rows]))
     return {"rows": rows, "aurc": round(aurc, 6),
             "beats_random_everywhere": all(x["beats_random"] for x in rows if x["coverage"] < 1.0)}
+
+
+def risk_coverage(p: np.ndarray, n_boot: int = 2000) -> dict:
+    """The VALIDATION curve. `p` must come from `fit_and_score`, which scores the
+    validation partition. Nothing computed here may be reported as sealed."""
+    r = models.run(target=TARGET, method="delta", cheap_level=CHEAP_LEVEL, split=SPLIT,
+                   speed="full", eval_on="validation", return_errors=True)
+    return {"eval_on": "validation", **_curve(r.errors, p, n_boot)}
+
+
+# --------------------------------------------------------------------------
+# The same curve on the partition the claim is actually adjudicated against.
+# --------------------------------------------------------------------------
+#
+# The validation curve above is what the agent is allowed to see, so it is what
+# the exploratory analysis runs on -- and it is NOT the number the write-up may
+# quote as verified. The sealed curve below is, and it is measurably weaker:
+# selective prediction has to survive the val->test gap like everything else.
+# Same construction as critic.py::_sealed_selective -- classifier fit on `train`
+# alone, scored on a partition it has never seen -- so the curve and the
+# referee's verdict cannot disagree.
+
+
+def sealed_risk_scores(level: str = CHEAP_LEVEL, split: str = SPLIT) -> np.ndarray:
+    """Predicted misordering risk for the sealed test partition."""
+    import lightgbm as lgb
+
+    env = models._env()
+    X, pos = env["X"], env["positions"]
+    parts = models._split(split)
+    tr, te = parts["train"], parts["sealed_test"]
+    y = misordered_labels(level)
+
+    clf = lgb.LGBMClassifier(n_estimators=300, learning_rate=0.05, num_leaves=31,
+                             random_state=0, n_jobs=-1, verbose=-1, force_row_wise=True)
+    clf.fit(X[pos[tr]], y[tr])
+    return clf.predict_proba(X[pos[te]])[:, 1]
+
+
+def risk_coverage_sealed(target: str = TARGET, n_boot: int = 2000) -> dict:
+    """The SEALED curve. Requires the audit token, like every sealed number."""
+    p = sealed_risk_scores()
+    r = models.run(target=target, method="delta", cheap_level=CHEAP_LEVEL, split=SPLIT,
+                   speed="full", eval_on="sealed_test", audit_token=models.AUDIT_TOKEN,
+                   return_errors=True)
+    return {"eval_on": "sealed_test", "target": target, **_curve(r.errors, p, n_boot)}
+
+
+def main_sealed() -> int:
+    print("risk-coverage on the SEALED test set\n")
+    out = risk_coverage_sealed()
+    full = out["rows"][0]["selective_mae"]
+    for r in out["rows"]:
+        drop = 100 * (1 - r["selective_mae"] / full)
+        print(f"  coverage {r['coverage']:.0%}  n={r['n_kept']:4d}  "
+              f"selective {r['selective_mae']:.6f}  random {r['random_mae']:.6f} "
+              f"CI {r['random_ci95']}  beats_random {str(r['beats_random']):5s}  −{drop:.1f}%")
+    print(f"\n  AURC {out['aurc']:.6f}  beats random everywhere: "
+          f"{out['beats_random_everywhere']}")
+    path = ROOT / "results" / "risk_coverage_sealed.json"
+    path.write_text(json.dumps(out, indent=2) + "\n")
+    print(f"  wrote {path}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main_sealed() if "--sealed" in sys.argv else main())
