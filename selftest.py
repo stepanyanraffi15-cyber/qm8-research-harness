@@ -218,22 +218,35 @@ def t_label_efficiency():
     )
 
 
-@check("abstention beats random rejection at matched coverage")
-def t_abstention():
-    """The strongest finding, checked end to end rather than read from a file."""
-    sys.path.insert(0, str(ROOT))
-    from analysis.misorder_signature import (CHEAP_LEVEL, fit_and_score,
-                                             misordered_labels, risk_coverage)
+@check("the retracted abstention claim stays retracted")
+def t_abstention_retracted():
+    """This check used to certify the flagship. It now certifies its retraction.
 
-    real = fit_and_score(misordered_labels(CHEAP_LEVEL), "misordered")
-    rc = risk_coverage(real["probs"], n_boot=500)
-    half = next(r for r in rc["rows"] if r["coverage"] == 0.5)
-    ok = rc["beats_random_everywhere"] and real["auc_ci95"][0] > 0.5
-    return ok, (
-        f"classifier AUC {real['auc']} CI {real['auc_ci95']}; at 50% coverage "
-        f"selective {half['selective_mae']:.5f} vs random {half['random_mae']:.5f} "
-        f"CI {half['random_ci95']}"
-    )
+    The claim was: a structure-only classifier predicts which molecules the
+    delta-model gets wrong, and abstaining on them beats random rejection. That is
+    true and it is not enough -- on the SEALED set a free rule (rank by the cheap
+    E2-E1 gap, no training, no features) beats the classifier on both targets, and
+    on f1 the gain does not survive magnitude stratification.
+
+    The old version of this check ran on validation, where the classifier wins.
+    That is the same val->test error that produced the withdrawn 31% headline, so
+    the check that was supposed to guard the claim shared the claim's blind spot.
+    """
+    import json
+
+    b = json.loads((ROOT / "results" / "abstention_battery.json").read_text())
+    lines = []
+    for target in ("f1", "E1"):
+        t = b["targets"][target]
+        clf = t["risk_rules"]["classifier"]["selective_mae"]
+        best = t["best_free_baseline"]
+        lines.append(f"{target}: classifier {clf:.5f} vs free {best['name']} {best['selective_mae']:.5f}")
+        if t["beats_free_baselines"]:
+            return False, f"{target}: classifier still beats every free baseline -- retraction wrong"
+    st = b["targets"]["f1"]["magnitude_stratified"]
+    inside = st["selective_mae"] >= st["null_ci95"][0]
+    return inside, ("; ".join(lines)
+                    + f"; f1 stratified {st['selective_mae']:.5f} inside null {st['null_ci95']}")
 
 
 @check("the loop runs with no GPU and no network")
@@ -253,7 +266,7 @@ def main() -> int:
     fast = (t_parse, t_duplication, t_alignment, t_reset, t_sealed, t_no_leak,
             t_split_integrity, t_shuffle_control, t_referee_rejects,
             t_referee_narrows, t_offline_loop)
-    findings = (t_state_ordering, t_label_efficiency, t_abstention)
+    findings = (t_state_ordering, t_label_efficiency, t_abstention_retracted)
 
     print("-- harness --")
     for fn in fast:
