@@ -154,9 +154,28 @@ class Agent:
                     args = {}
 
                 if name == "claim":
-                    observation = tools.claim(**args) if _claimable(args) else (
-                        "ERROR: claim needs at least `statement`, `kind` and `evidence`."
-                    )
+                    # `claim` is intercepted before dispatch so it can double as
+                    # the stopping rule -- which meant it skipped the try/except
+                    # every other tool gets, and a single bad kwarg killed the
+                    # whole rollout. Found by a real run: the model emitted
+                    # claim(budget=...) and the sweep died at seed 2 with a
+                    # TypeError. The terminal tool is the LAST one that should be
+                    # able to crash a run, so it gets the same guard.
+                    if not _claimable(args):
+                        observation = (
+                            "ERROR: claim needs at least `statement`, `kind` and `evidence`."
+                        )
+                    else:
+                        try:
+                            observation = tools.claim(**args)
+                        except TypeError as exc:
+                            observation = (
+                                f"ERROR: bad arguments for claim: {exc}. "
+                                f"Accepted: statement, kind, scope, evidence, "
+                                f"config_a, config_b, control, coverage."
+                            )
+                        except Exception as exc:  # noqa: BLE001
+                            observation = f"ERROR: claim failed: {exc}"
                     if session.claim is not None:
                         result.claim = session.claim
                         result.steps.append(

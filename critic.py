@@ -8,7 +8,7 @@ ChemCrow found GPT-4 could not separate confidently-wrong chemistry from correct
 chemistry, and trajectory judges show *argument blindness* -- failing to notice a
 wrong value passed to a tool (BabelJudge). A held-out number is not persuadable.
 
-Eight checks, in order. The first three catch fabrication and leakage; those
+Nine checks, in order. The first three catch fabrication and leakage; those
 existed in the earlier design. The rest catch the failures that actually occur in
 ML research, and did not:
 
@@ -20,11 +20,31 @@ ML research, and did not:
   6 multiplicity      Holm correction over the configs actually compared
   7 scope             the claim's quantifier matches the configs actually run
   8 control           a mechanistic claim has a control experiment
+  9 rival baselines   a selective rule beats free rules and a stratified null
 
 Check 5 was added because a real agent rollout produced a claim that was exactly
 backwards -- "direct beats cheap for f1" when cheap wins by 0.004 a.u. -- and an
 earlier version of this file SIGNED it. Verifying that a difference is real is
 not the same as verifying it points the way the claim says.
+
+Check 9 was added because this file SIGNED the project's flagship claim, and the
+claim was wrong. Selective prediction on f1 cleared every bar above -- a
+pre-registered hypothesis, a sealed re-run, a random-rejection null it beat
+comfortably, a coin-flip control that came out flat -- and it was still an
+artifact. Random rejection is the wrong null: MAE on a non-negative target falls
+whenever you drop the large values, so any score correlated with |target| clears
+it without predicting a single error. The classifier was ranking molecules by
+brightness (Spearman +0.38 against f1_CC2), and abstaining on the bright ones is
+exactly what a photophysics screen must not do. Two questions settle it, and
+neither is a statistical refinement of the first:
+
+  is the rule better than one that costs nothing?  cheap_gap, predicted_correction
+  does it survive with magnitude held fixed?       the stratified null
+
+A rule beaten by a free rule is not worth its features; a rule inside the
+stratified null is measuring magnitude, not error. Either is fatal, and the
+labels say which -- `free_baseline_dominates` and `magnitude_artifact` are
+different diagnoses with different fixes.
 
 Check 3 is why this file holds the audit token. Checks 5 and 6 need the log
 rather than the claim, because a claim's own account of how many things were
@@ -61,6 +81,25 @@ ALPHA = 0.05
 
 SIGNED, NARROWED, REJECTED = "signed", "narrowed", "rejected"
 
+
+def _misorder_signature():
+    """The sealed selective-prediction measurements, imported lazily.
+
+    `analysis/` is a directory of scripts rather than an installed package, so
+    the import is deferred to the one method that needs it: importing critic.py
+    must not depend on the repository layout, and only selective claims pay for
+    it. Sharing the module is deliberate -- the alternative is two copies of the
+    sealed-scoring construction, and the copy that drifts is the one nobody is
+    adjudicating against.
+    """
+    import sys
+
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from analysis import misorder_signature
+
+    return misorder_signature
+
 # Failure labels. A pass rate tells you nothing about what to fix; a histogram of
 # named failure modes does, which is why every rejection carries one.
 FAILURES = [
@@ -71,6 +110,8 @@ FAILURES = [
     "no_control",
     "gave_up",
     "abstained_on_findable",
+    "magnitude_artifact",
+    "free_baseline_dominates",
 ]
 
 
@@ -441,17 +482,27 @@ class Critic:
     def _sealed_selective(self, claim: dict) -> dict:
         """Adjudicate a selective-prediction claim on the sealed test set.
 
-        The abstention result is the project's most useful finding and it does not
-        fit the two-config comparison path, so it gets its own verifier rather
-        than being reported as "strong evidence" and left unaudited.
+        The abstention result does not fit the two-config comparison path, so it
+        gets its own verifier rather than being reported as "strong evidence" and
+        left unaudited.
 
-        Everything is refit from `train` only. The risk classifier never sees the
-        sealed partition it scores, and the baseline is random rejection at the
-        SAME coverage -- a model that looks good discarding 30% of molecules has
-        proven nothing until it beats throwing 30% away at random.
+        Everything is refit from `train` only; the risk classifier never sees the
+        sealed partition it scores. The baseline used to be random rejection at
+        the same coverage, and that baseline is kept -- but it is no longer
+        sufficient, and the module docstring says why. Alongside it the rule is
+        now scored against the rules it has to be better than to be worth
+        anything: two that cost nothing, one that spends the same training budget
+        on the question that matters, the oracle ceiling, and a null that
+        randomises within |target| quintiles so magnitude cannot be the answer.
+
+        The measurement lives in analysis.misorder_signature.selective_battery,
+        which the published table is generated from too -- one implementation, so
+        the referee's verdict and the write-up's table cannot disagree.
         """
         import lightgbm as lgb
         from sklearn.metrics import roc_auc_score
+
+        misorder = _misorder_signature()
 
         cfg = claim.get("config_b") or {}
         target = cfg.get("target", "f1")
@@ -460,61 +511,64 @@ class Critic:
         coverage = float(claim.get("coverage", 0.5))
 
         env = models._env()
-        names, T, pos, X = env["names"], env["targets"], env["positions"], env["X"]
+        pos, X = env["positions"], env["X"]
         parts = models._split(split)
         tr, te = parts["train"], parts["sealed_test"]
 
-        def misordered(idx):
-            i = lambda pr, lv: names.index(f"{pr}-{lv}")  # noqa: E731
-            f1c, f2c = T[pos[idx], i("f1", "CC2")], T[pos[idx], i("f2", "CC2")]
-            f1t, f2t = T[pos[idx], i("f1", level)], T[pos[idx], i("f2", level)]
-            given = np.abs(f1t - f1c) + np.abs(f2t - f2c)
-            swap = np.abs(f2t - f1c) + np.abs(f1t - f2c)
-            return (swap < given).astype(int)
+        y = misorder.misordered_labels(level)
+        y_tr, y_te = y[tr], y[te]
 
-        y_tr, y_te = misordered(tr), misordered(te)
+        b = misorder.selective_battery(target, level, split, coverage)
 
-        def fit(labels):
-            clf = lgb.LGBMClassifier(n_estimators=300, learning_rate=0.05, num_leaves=31,
-                                     random_state=0, n_jobs=-1, verbose=-1,
-                                     force_row_wise=True)
-            clf.fit(X[pos[tr]], labels)
-            return clf.predict_proba(X[pos[te]])[:, 1]
-
-        p = fit(y_tr)
+        # CONTROL: the same pipeline predicting a coin flip. If this separates,
+        # the classifier is memorising the training set rather than reading
+        # structure, and no amount of downstream MAE means anything.
         rng = np.random.default_rng(999)
-        p_ctrl = fit((rng.random(len(y_tr)) < y_tr.mean()).astype(int))
-
-        r = models.run(target=target, method="delta", cheap_level=level, split=split,
-                       speed="full", eval_on="sealed_test",
-                       audit_token=models.AUDIT_TOKEN, return_errors=True)
-        err = r.errors
-        k = max(1, int(round(coverage * len(err))))
-        selective = float(err[np.argsort(p)[:k]].mean())
-
-        rb = np.random.default_rng(0)
-        rand = np.sort([float(err[rb.choice(len(err), k, replace=False)].mean())
-                        for _ in range(2000)])
-        lo, hi = float(rand[50]), float(rand[1950])
+        ctrl = lgb.LGBMClassifier(n_estimators=300, learning_rate=0.05, num_leaves=31,
+                                  random_state=0, n_jobs=-1, verbose=-1, force_row_wise=True)
+        ctrl.fit(X[pos[tr]], (rng.random(len(y_tr)) < y_tr.mean()).astype(int))
+        p_ctrl = ctrl.predict_proba(X[pos[te]])[:, 1]
 
         ctrl_auc = float(roc_auc_score(y_te, p_ctrl)) if len(set(y_te)) > 1 else 0.5
         ab = np.random.default_rng(1)
         idx = ab.integers(0, len(p_ctrl), size=(500, len(p_ctrl)))
         caucs = np.sort([roc_auc_score(y_te[j], p_ctrl[j]) for j in idx if len(set(y_te[j])) > 1])
 
+        selective = b["risk_rules"]["classifier"]["selective_mae"]
+        rand_mae = b["random_rejection"]["selective_mae"]
+        lo, hi = b["random_rejection"]["ci95"]
+        strat = b["magnitude_stratified"]
+        best_free = b["best_free_baseline"]
+
+        rivals = ", ".join(
+            f"{n} {r['selective_mae']:.6f}" + (" (free)" if r["free"] else "")
+            for n, r in b["risk_rules"].items() if n != "classifier"
+        )
+
         return {
             "coverage": coverage,
-            "full_mae": r.mae,
+            "target": target,
+            "full_mae": b["full_mae"],
             "selective_mae": selective,
-            "random_mae": float(rand.mean()),
-            "random_ci95": [round(lo, 6), round(hi, 6)],
+            "random_mae": rand_mae,
+            "random_ci95": [lo, hi],
             "beats_random": bool(selective < lo),
-            "classifier_auc": round(float(roc_auc_score(y_te, p)), 4),
+            "classifier_auc": b["classifier_auc"],
             "control_auc": ctrl_auc,
             "control_auc_ci": [round(float(caucs[12]), 4), round(float(caucs[487]), 4)],
             "control_null": bool(caucs[487] > 0.45 and caucs[12] < 0.55),
-            "summary": (f"sealed: full {r.mae:.6f}, selective@{coverage:.0%} {selective:.6f}, "
-                        f"random {rand.mean():.6f}"),
+            "battery": b,
+            "beats_free_baselines": b["beats_free_baselines"],
+            "best_free": best_free,
+            "beats_stratified_null": strat["beats_null"],
+            "rival_summary": rivals,
+            "stratified_summary": (
+                f"within |{target}| quintiles: {strat['selective_mae']:.6f} vs "
+                f"stratified null {strat['null_mae']:.6f} CI {strat['null_ci95']}; "
+                f"Spearman(risk, {target}_CC2) = {b['spearman_risk_vs_target']:+.3f}"
+            ),
+            "summary": (f"sealed: full {b['full_mae']:.6f}, selective@{coverage:.0%} "
+                        f"{selective:.6f}, random {rand_mae:.6f}; rivals: {rivals}"),
         }
 
     def _sealed_comparison(self, claim: dict) -> dict:
