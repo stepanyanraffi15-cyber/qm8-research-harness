@@ -42,6 +42,7 @@ from __future__ import annotations
 
 import json
 import time
+import uuid
 from pathlib import Path
 
 import numpy as np
@@ -54,7 +55,14 @@ LOG_PATH = ROOT / "results" / "experiment_log.jsonl"
 
 DEFAULT_BUDGET = 30
 
-SLICE_BY = ["state_gap", "heavy_atoms", "brightness", "train_distance", "cheap_error"]
+
+def new_run_prefix() -> str:
+    """Six hex characters, one per rollout. Not a hash of anything -- just enough
+    entropy that two rollouts appended to the same log never share an id."""
+    return uuid.uuid4().hex[:6]
+
+
+SLICE_BY =["state_gap", "heavy_atoms", "brightness", "train_distance", "cheap_error"]
 CONTROLS = ["shuffle_labels", "apply_to_energies", "random_reindex"]
 INTERVENTIONS = ["reindex_states", "ablate_features", "subsample_train"]
 
@@ -67,11 +75,14 @@ class Session:
     cannot see its own budget cannot manage it.
     """
 
-    def __init__(self, budget: int = DEFAULT_BUDGET, log_path: Path = LOG_PATH, seed: int = 0):
+    def __init__(self, budget: int = DEFAULT_BUDGET, log_path: Path = LOG_PATH, seed: int = 0,
+                 run_prefix: str | None = None):
         self.budget = budget
         self.calls_used = 0
         self.log_path = log_path
         self.seed = seed
+        # One prefix per Session, i.e. per rollout. See _next_id.
+        self.run_prefix = run_prefix or new_run_prefix()
         self.entries: list[dict] = []
         self.best: dict[str, tuple[float, np.ndarray, str]] = {}  # family -> (mae, errors, eid)
         self._noise: dict[str, float] = {}
@@ -81,7 +92,17 @@ class Session:
     # -- logging ----------------------------------------------------------
 
     def _next_id(self) -> str:
-        return f"e_{len(self.entries):04d}"
+        """`e_<run>_<n>` -- run-scoped, not session-local.
+
+        This used to be `e_{n:04d}`, which restarts at e_0000 on every rollout.
+        Every rollout appends to the SAME log, so results/experiment_log.jsonl
+        holds `e_0000` twelve times over, and `e_0001` twelve times. critic.py
+        resolves a claim's `evidence` ids against that log by set membership, so
+        a claim from rollout eight can be adjudicated against rollout one's
+        experiment -- silently, and against a config the claim never ran. The id
+        has to identify the run as well as the step.
+        """
+        return f"e_{self.run_prefix}_{len(self.entries):04d}"
 
     def _log(self, entry: dict) -> None:
         self.entries.append(entry)
@@ -121,9 +142,10 @@ def session() -> Session:
     return _SESSION
 
 
-def reset_session(budget: int = DEFAULT_BUDGET, log_path: Path = LOG_PATH, seed: int = 0) -> Session:
+def reset_session(budget: int = DEFAULT_BUDGET, log_path: Path = LOG_PATH, seed: int = 0,
+                  run_prefix: str | None = None) -> Session:
     global _SESSION
-    _SESSION = Session(budget=budget, log_path=log_path, seed=seed)
+    _SESSION = Session(budget=budget, log_path=log_path, seed=seed, run_prefix=run_prefix)
     return _SESSION
 
 

@@ -9,6 +9,10 @@ results/scratch/
 # python
 __pycache__/
 *.py[cod]
+# `uv pip install -e .` builds for real now, and drops this beside the modules
+*.egg-info/
+build/
+dist/
 .venv/
 venv/
 .pytest_cache/

@@ -35,6 +35,7 @@ Two traps this file has to respect:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import random as _random
 import time
@@ -48,6 +49,18 @@ ROOT = Path(__file__).resolve().parent
 RESULTS = ROOT / "results"
 
 BOOTSTRAP_ITERS = 5000
+
+
+def sha256_file(path: Path) -> str | None:
+    """Content hash of a trace file, or None if it was never written."""
+    if not path.exists():
+        return None
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 16), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
 
 # The space both null policies draw from. It is the human's contribution, and
 # saying so is the point: an agent that cannot beat uniform sampling from this
@@ -139,12 +152,21 @@ def run_agent(seed: int, budget: int, temperature: float) -> dict:
     from agent import Agent
     from llm import LLM
 
-    log = RESULTS / "arms" / f"agent_seed{seed}.jsonl"
+    # The trace filename used to be `agent_seed{seed}.jsonl` -- fixed per seed,
+    # and truncated at the top of every run. Combined with --resume that pairs a
+    # cached report row with whatever trace was written LAST: results/
+    # arms_agent8.json's rows for seeds 0-2 are byte-identical copies of
+    # arms_qwen3.json's, while results/arms/agent_seed0.jsonl on disk came from a
+    # later, interrupted sweep. The shipped seed-0 trace runs
+    # ['direct','direct','delta','delta']; its report row says all-direct. One
+    # run per filename, and the filename carries the run, not just the seed.
+    prefix = tools.new_run_prefix()
+    log = RESULTS / "arms" / f"agent_{prefix}_seed{seed}.jsonl"
     log.parent.mkdir(parents=True, exist_ok=True)
     log.unlink(missing_ok=True)
 
     agent = Agent(llm=LLM(temperature=temperature), max_steps=budget + 4,
-                  budget=budget, log_path=log)
+                  budget=budget, log_path=log, run_prefix=prefix)
     res = agent.run(
         "How few expensive CC2 labels are needed to predict excited-state properties, "
         "and where does the prediction break?"
@@ -166,11 +188,43 @@ def run_agent(seed: int, budget: int, temperature: float) -> dict:
         "tokens": res.usage.total_tokens,
         "stopped_because": res.stopped_because,
         "claim": res.claim,
+        "run_prefix": prefix,
         "log_path": str(log),
+        # Pins this row to that exact file. --resume re-runs the row rather than
+        # trusting it if the two ever come apart.
+        "log_sha256": sha256_file(log),
     }
 
 
 ARMS = {"random": run_random, "grid": run_grid}
+
+
+def trace_intact(row: dict) -> tuple[bool, str]:
+    """Does a cached report row still match the trace it was written from?
+
+    A row is only as trustworthy as the file it points at. The null arms write no
+    trace and are always intact; an agent row has to name a file, carry a hash,
+    and still agree with what is on disk.
+    """
+    if row.get("arm") != "agent":
+        return True, ""
+    if "log_sha256" not in row:
+        return False, "no trace hash recorded (row predates trace pinning)"
+    path = row.get("log_path")
+    if not path:
+        return False, "no trace path recorded"
+    p = Path(path)
+    recorded, actual = row["log_sha256"], sha256_file(p)
+    if actual == recorded:
+        # Equal and both None means the run logged nothing and still logs
+        # nothing, which is consistent. Verified either way.
+        return True, ""
+    if recorded is None:
+        return False, f"row recorded no trace but {p.name} now exists"
+    if actual is None:
+        return False, f"trace {p.name} is missing from disk"
+    return False, (f"trace {p.name} has changed since the row was written "
+                   f"(disk {actual[:12]} != recorded {recorded[:12]})")
 
 
 # --------------------------------------------------------------------------
@@ -240,11 +294,22 @@ def main() -> int:
     # killer on a laptop, by a timeout on a cluster -- and losing eight rollouts
     # because the report is only written at the end is a harness bug, not bad
     # luck. With --resume the same command picks up where it stopped.
+    # A cached row is reused only if the trace it names is still the trace it was
+    # written from. Anything else gets dropped and re-run, loudly: a report row
+    # paired with somebody else's trace is worse than no row at all, because it
+    # reads as evidence.
     done = set()
     if args.resume and args.out.exists():
         prev = json.loads(args.out.read_text())
-        runs = prev.get("runs", [])
+        runs, stale = [], []
+        for r in prev.get("runs", []):
+            ok, why = trace_intact(r)
+            (runs if ok else stale).append(r)
+            if not ok:
+                print(f"  WARNING: dropping cached {r['arm']} seed={r['seed']}: {why}")
         done = {(r["arm"], r["seed"]) for r in runs}
+        if stale:
+            print(f"  {len(stale)} cached run(s) failed trace verification and will be re-run")
         print(f"  resuming: {len(done)} run(s) already complete")
 
     def checkpoint():

@@ -112,17 +112,21 @@ def _extract_id(observation: str) -> str | None:
 class Agent:
     def __init__(self, llm: LLM | None = None, max_steps: int = 20,
                  budget: int = 30, system_prompt: str = SYSTEM_PROMPT,
-                 log_path: Path | None = None) -> None:
+                 log_path: Path | None = None, run_prefix: str | None = None) -> None:
         self.llm = llm or LLM()
         self.max_steps = max_steps
         self.budget = budget
         self.system_prompt = system_prompt
         self.log_path = log_path
+        # Caller-supplied so the evaluator can name the trace file after the same
+        # run the experiment ids carry. Left None, the Session mints its own.
+        self.run_prefix = run_prefix
 
     def run(self, question: str) -> Result:
         session = tools.reset_session(
             budget=self.budget,
             log_path=self.log_path or tools.LOG_PATH,
+            run_prefix=self.run_prefix,
         )
         messages: list[dict] = [
             {"role": "system", "content": self.system_prompt},

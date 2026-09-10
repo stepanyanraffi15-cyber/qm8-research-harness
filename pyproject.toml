@@ -13,6 +13,35 @@ dependencies = [
     "tqdm>=4.66",
 ]
 
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+# Without this, `uv pip install -e .` fails. PEP 517 falls back to setuptools,
+# whose flat-layout auto-discovery refuses to guess when there are several
+# top-level directories (analysis, docs, results, world, writeup) — so the
+# documented first command of "Reproduce it" aborted before installing
+# anything. `[tool.uv] package = false` does not cover this: it governs
+# `uv sync` / `uv run`, not `uv pip install`.
+#
+# The harness is a set of flat modules, not a package, so name them explicitly
+# rather than letting discovery guess. Anything importable from the repo root
+# has to be listed here.
+[tool.setuptools]
+py-modules = [
+    "agent",
+    "critic",
+    "evaluate",
+    "features",
+    "llm",
+    "models",
+    "selftest",
+    "tools",
+]
+
+# Keeps `uv sync` / `uv run` from building the project, as before. It is
+# deliberately NOT the mechanism that makes `uv pip install -e .` work — that is
+# [build-system] plus [tool.setuptools] above.
 [tool.uv]
 package = false
 
