@@ -1,0 +1,398 @@
+{
+  "what": "five methods x two splits x four targets on the SEALED test set, with paired bootstrap CIs for MAE(delta) - MAE(direct_aug) over molecules",
+  "sign_convention": "delta_minus_direct_aug is MAE(delta) - MAE(direct_aug); negative means delta is better",
+  "methods": [
+    "cheap",
+    "direct",
+    "direct_aug",
+    "delta",
+    "zero"
+  ],
+  "splits": [
+    "random",
+    "scaffold"
+  ],
+  "targets": [
+    "E1",
+    "E2",
+    "f1",
+    "f2"
+  ],
+  "cheap_level": "PBE0-TZVP",
+  "speed": "full",
+  "eval_on": "sealed_test",
+  "bootstrap_iters": 5000,
+  "split_sha256": {
+    "random": "e7edcaba59fa339dd03438002df16155b8f2349d7651904d755f0a7160ec9052",
+    "scaffold": "29db3c99f5794c3259b706b959f8d969b66608b53c6ff8c3c480712abdd796aa"
+  },
+  "summary": {
+    "n_cells": 8,
+    "delta_significantly_beats_direct_aug": 1,
+    "direct_worse_than_cheap": 6,
+    "direct_aug_worse_than_cheap": 3
+  },
+  "cells": [
+    {
+      "target": "E1",
+      "split": "random",
+      "cheap_level": "PBE0-TZVP",
+      "speed": "full",
+      "n_train": 17429,
+      "n_sealed": 2178,
+      "sealed_mae": {
+        "cheap": 0.269276,
+        "direct": 0.192505,
+        "direct_aug": 0.062214,
+        "delta": 0.062985,
+        "zero": 5.961147
+      },
+      "validation_mae": {
+        "cheap": 0.272059,
+        "direct": 0.192809,
+        "direct_aug": 0.057817,
+        "delta": 0.058916,
+        "zero": 5.989578
+      },
+      "val_to_test_gap": {
+        "cheap": -0.002783,
+        "direct": -0.000304,
+        "direct_aug": 0.004397,
+        "delta": 0.004069,
+        "zero": -0.028431
+      },
+      "delta_minus_direct_aug": {
+        "mean_difference": 0.0007703400848752243,
+        "ci95": [
+          -0.001724,
+          0.0034
+        ],
+        "excludes_zero": false,
+        "n_paired": 2178,
+        "p_value": 0.5504,
+        "interpretation": "indistinguishable at 95%"
+      },
+      "published_claim": {
+        "structure_only_worse_than_doing_nothing": false,
+        "structure_plus_cheap_worse_than_doing_nothing": false,
+        "delta_beats_direct_aug": false
+      }
+    },
+    {
+      "target": "E2",
+      "split": "random",
+      "cheap_level": "PBE0-TZVP",
+      "speed": "full",
+      "n_train": 17429,
+      "n_sealed": 2178,
+      "sealed_mae": {
+        "cheap": 0.405818,
+        "direct": 0.209125,
+        "direct_aug": 0.106101,
+        "delta": 0.113645,
+        "zero": 6.753422
+      },
+      "validation_mae": {
+        "cheap": 0.404444,
+        "direct": 0.20619,
+        "direct_aug": 0.102397,
+        "delta": 0.112349,
+        "zero": 6.786502
+      },
+      "val_to_test_gap": {
+        "cheap": 0.001374,
+        "direct": 0.002935,
+        "direct_aug": 0.003704,
+        "delta": 0.001296,
+        "zero": -0.03308
+      },
+      "delta_minus_direct_aug": {
+        "mean_difference": 0.007544412870256408,
+        "ci95": [
+          0.004028,
+          0.011131
+        ],
+        "excludes_zero": true,
+        "n_paired": 2178,
+        "p_value": 0.0,
+        "interpretation": "direct_aug better"
+      },
+      "published_claim": {
+        "structure_only_worse_than_doing_nothing": false,
+        "structure_plus_cheap_worse_than_doing_nothing": false,
+        "delta_beats_direct_aug": false
+      }
+    },
+    {
+      "target": "f1",
+      "split": "random",
+      "cheap_level": "PBE0-TZVP",
+      "speed": "full",
+      "n_train": 17429,
+      "n_sealed": 2178,
+      "sealed_mae": {
+        "cheap": 0.008676,
+        "direct": 0.016127,
+        "direct_aug": 0.008894,
+        "delta": 0.010666,
+        "zero": 0.023983
+      },
+      "validation_mae": {
+        "cheap": 0.007578,
+        "direct": 0.015604,
+        "direct_aug": 0.007966,
+        "delta": 0.009624,
+        "zero": 0.021965
+      },
+      "val_to_test_gap": {
+        "cheap": 0.001098,
+        "direct": 0.000523,
+        "direct_aug": 0.000928,
+        "delta": 0.001042,
+        "zero": 0.002018
+      },
+      "delta_minus_direct_aug": {
+        "mean_difference": 0.0017719959283483,
+        "ci95": [
+          0.001187,
+          0.002395
+        ],
+        "excludes_zero": true,
+        "n_paired": 2178,
+        "p_value": 0.0,
+        "interpretation": "direct_aug better"
+      },
+      "published_claim": {
+        "structure_only_worse_than_doing_nothing": true,
+        "structure_plus_cheap_worse_than_doing_nothing": true,
+        "delta_beats_direct_aug": false
+      }
+    },
+    {
+      "target": "f2",
+      "split": "random",
+      "cheap_level": "PBE0-TZVP",
+      "speed": "full",
+      "n_train": 17429,
+      "n_sealed": 2178,
+      "sealed_mae": {
+        "cheap": 0.023505,
+        "direct": 0.03226,
+        "direct_aug": 0.02152,
+        "delta": 0.024831,
+        "zero": 0.044596
+      },
+      "validation_mae": {
+        "cheap": 0.023013,
+        "direct": 0.03379,
+        "direct_aug": 0.020964,
+        "delta": 0.024834,
+        "zero": 0.044965
+      },
+      "val_to_test_gap": {
+        "cheap": 0.000492,
+        "direct": -0.00153,
+        "direct_aug": 0.000556,
+        "delta": -3e-06,
+        "zero": -0.000369
+      },
+      "delta_minus_direct_aug": {
+        "mean_difference": 0.0033114716334655876,
+        "ci95": [
+          0.002339,
+          0.004272
+        ],
+        "excludes_zero": true,
+        "n_paired": 2178,
+        "p_value": 0.0,
+        "interpretation": "direct_aug better"
+      },
+      "published_claim": {
+        "structure_only_worse_than_doing_nothing": true,
+        "structure_plus_cheap_worse_than_doing_nothing": false,
+        "delta_beats_direct_aug": false
+      }
+    },
+    {
+      "target": "E1",
+      "split": "scaffold",
+      "cheap_level": "PBE0-TZVP",
+      "speed": "full",
+      "n_train": 17429,
+      "n_sealed": 2178,
+      "sealed_mae": {
+        "cheap": 0.205177,
+        "direct": 0.355901,
+        "direct_aug": 0.084875,
+        "delta": 0.076285,
+        "zero": 5.828112
+      },
+      "validation_mae": {
+        "cheap": 0.202736,
+        "direct": 0.354975,
+        "direct_aug": 0.078722,
+        "delta": 0.068594,
+        "zero": 5.825058
+      },
+      "val_to_test_gap": {
+        "cheap": 0.002441,
+        "direct": 0.000926,
+        "direct_aug": 0.006153,
+        "delta": 0.007691,
+        "zero": 0.003054
+      },
+      "delta_minus_direct_aug": {
+        "mean_difference": -0.008589888883504,
+        "ci95": [
+          -0.011716,
+          -0.005631
+        ],
+        "excludes_zero": true,
+        "n_paired": 2178,
+        "p_value": 0.0,
+        "interpretation": "delta better"
+      },
+      "published_claim": {
+        "structure_only_worse_than_doing_nothing": true,
+        "structure_plus_cheap_worse_than_doing_nothing": false,
+        "delta_beats_direct_aug": true
+      }
+    },
+    {
+      "target": "E2",
+      "split": "scaffold",
+      "cheap_level": "PBE0-TZVP",
+      "speed": "full",
+      "n_train": 17429,
+      "n_sealed": 2178,
+      "sealed_mae": {
+        "cheap": 0.289498,
+        "direct": 0.344507,
+        "direct_aug": 0.136267,
+        "delta": 0.137725,
+        "zero": 6.555141
+      },
+      "validation_mae": {
+        "cheap": 0.27127,
+        "direct": 0.317783,
+        "direct_aug": 0.125031,
+        "delta": 0.123504,
+        "zero": 6.558921
+      },
+      "val_to_test_gap": {
+        "cheap": 0.018228,
+        "direct": 0.026724,
+        "direct_aug": 0.011236,
+        "delta": 0.014221,
+        "zero": -0.00378
+      },
+      "delta_minus_direct_aug": {
+        "mean_difference": 0.001457819238190447,
+        "ci95": [
+          -0.003177,
+          0.005989
+        ],
+        "excludes_zero": false,
+        "n_paired": 2178,
+        "p_value": 0.5212,
+        "interpretation": "indistinguishable at 95%"
+      },
+      "published_claim": {
+        "structure_only_worse_than_doing_nothing": true,
+        "structure_plus_cheap_worse_than_doing_nothing": false,
+        "delta_beats_direct_aug": false
+      }
+    },
+    {
+      "target": "f1",
+      "split": "scaffold",
+      "cheap_level": "PBE0-TZVP",
+      "speed": "full",
+      "n_train": 17429,
+      "n_sealed": 2178,
+      "sealed_mae": {
+        "cheap": 0.009214,
+        "direct": 0.023811,
+        "direct_aug": 0.011231,
+        "delta": 0.012909,
+        "zero": 0.030405
+      },
+      "validation_mae": {
+        "cheap": 0.007254,
+        "direct": 0.020078,
+        "direct_aug": 0.008771,
+        "delta": 0.010492,
+        "zero": 0.021441
+      },
+      "val_to_test_gap": {
+        "cheap": 0.00196,
+        "direct": 0.003733,
+        "direct_aug": 0.00246,
+        "delta": 0.002417,
+        "zero": 0.008964
+      },
+      "delta_minus_direct_aug": {
+        "mean_difference": 0.0016782894089535695,
+        "ci95": [
+          0.001011,
+          0.002344
+        ],
+        "excludes_zero": true,
+        "n_paired": 2178,
+        "p_value": 0.0,
+        "interpretation": "direct_aug better"
+      },
+      "published_claim": {
+        "structure_only_worse_than_doing_nothing": true,
+        "structure_plus_cheap_worse_than_doing_nothing": true,
+        "delta_beats_direct_aug": false
+      }
+    },
+    {
+      "target": "f2",
+      "split": "scaffold",
+      "cheap_level": "PBE0-TZVP",
+      "speed": "full",
+      "n_train": 17429,
+      "n_sealed": 2178,
+      "sealed_mae": {
+        "cheap": 0.023648,
+        "direct": 0.042592,
+        "direct_aug": 0.025243,
+        "delta": 0.0287,
+        "zero": 0.042875
+      },
+      "validation_mae": {
+        "cheap": 0.022586,
+        "direct": 0.04358,
+        "direct_aug": 0.02573,
+        "delta": 0.027017,
+        "zero": 0.044785
+      },
+      "val_to_test_gap": {
+        "cheap": 0.001062,
+        "direct": -0.000988,
+        "direct_aug": -0.000487,
+        "delta": 0.001683,
+        "zero": -0.00191
+      },
+      "delta_minus_direct_aug": {
+        "mean_difference": 0.003457440856351007,
+        "ci95": [
+          0.002461,
+          0.004496
+        ],
+        "excludes_zero": true,
+        "n_paired": 2178,
+        "p_value": 0.0,
+        "interpretation": "direct_aug better"
+      },
+      "published_claim": {
+        "structure_only_worse_than_doing_nothing": true,
+        "structure_plus_cheap_worse_than_doing_nothing": true,
+        "delta_beats_direct_aug": false
+      }
+    }
+  ],
+  "wall_seconds": 626.8
+}

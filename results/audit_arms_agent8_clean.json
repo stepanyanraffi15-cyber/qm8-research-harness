@@ -1,0 +1,424 @@
+[
+  {
+    "seed": 0,
+    "trace": "agent_3261c4_seed0.jsonl",
+    "claim_id": "agent_seed0",
+    "verdict": "rejected",
+    "kind": "exploratory",
+    "reasons": [
+      "wrong_direction: the effect is real but runs the other way -- f1/cheap/CAM beats f1/direct/CAM by 0.00540"
+    ],
+    "checks": {
+      "wellformed": {
+        "passed": true,
+        "detail": "shape ok"
+      },
+      "verifiable_kind": {
+        "passed": true,
+        "detail": "kind 'comparison' has a sealed-set measurement"
+      },
+      "split_hash": {
+        "passed": true,
+        "detail": "split tddft_gap hash 2fcf2b132922"
+      },
+      "evidence_resolves": {
+        "passed": true,
+        "detail": "2 evidence ids resolve"
+      },
+      "scope": {
+        "passed": true,
+        "detail": "the cited runs cover everything the claim quantifies over"
+      },
+      "control": {
+        "passed": true,
+        "detail": "not a mechanistic claim"
+      },
+      "configs_present": {
+        "passed": true,
+        "detail": "both configs present"
+      },
+      "comparisons_in_family": {
+        "passed": true,
+        "detail": "3 runs"
+      },
+      "sealed_rerun": {
+        "passed": true,
+        "detail": "sealed MAE a=0.01073 b=0.01613 (diff -0.00540)"
+      },
+      "noise_floor": {
+        "passed": true,
+        "detail": "paired bootstrap CI [-0.006711, -0.004057] on 2178 molecules"
+      },
+      "val_to_test_gap": {
+        "passed": true,
+        "detail": "val->test gap a=+0.00167 b=+0.00052"
+      },
+      "direction": {
+        "passed": false,
+        "detail": "claim says f1/direct/CAM beats f1/cheap/CAM; measured 0.01613 vs 0.01073"
+      },
+      "_p_value": 0.0
+    }
+  },
+  {
+    "seed": 1,
+    "trace": "agent_5a49f2_seed1.jsonl",
+    "claim_id": "agent_seed1",
+    "verdict": "narrowed",
+    "kind": "exploratory",
+    "reasons": [
+      "overscoped: claims target='E2' but ran ['f1']"
+    ],
+    "checks": {
+      "wellformed": {
+        "passed": true,
+        "detail": "shape ok"
+      },
+      "verifiable_kind": {
+        "passed": true,
+        "detail": "kind 'comparison' has a sealed-set measurement"
+      },
+      "split_hash": {
+        "passed": true,
+        "detail": "split random hash e7edcaba59fa"
+      },
+      "evidence_resolves": {
+        "passed": true,
+        "detail": "1 evidence ids resolve"
+      },
+      "scope": {
+        "passed": false,
+        "detail": "claims target='E2' but ran ['f1']",
+        "observed": {
+          "target": "f1",
+          "split": "random",
+          "cheap_level": "PBE0-SVP"
+        }
+      },
+      "control": {
+        "passed": true,
+        "detail": "not a mechanistic claim"
+      },
+      "configs_present": {
+        "passed": true,
+        "detail": "both configs present"
+      },
+      "comparisons_in_family": {
+        "passed": true,
+        "detail": "6 runs"
+      },
+      "sealed_rerun": {
+        "passed": true,
+        "detail": "sealed MAE a=0.37599 b=0.20912 (diff +0.16687)"
+      },
+      "noise_floor": {
+        "passed": true,
+        "detail": "paired bootstrap CI [0.153722, 0.180911] on 2178 molecules"
+      },
+      "val_to_test_gap": {
+        "passed": true,
+        "detail": "val->test gap a=+0.00457 b=+0.00294"
+      },
+      "direction": {
+        "passed": true,
+        "detail": "claim says E2/direct/PBE0-SVP beats E2/cheap/PBE0-SVP; measured 0.20912 vs 0.37599"
+      },
+      "_p_value": 0.0
+    },
+    "narrowed_statement": "The direct method reduces the mean absolute error for E2 excitation energies by 34% compared to the cheap TDDFT baseline \u2014 for target=f1, split=random, cheap_level=PBE0-SVP only."
+  },
+  {
+    "seed": 2,
+    "trace": "agent_fece95_seed2.jsonl",
+    "claim_id": "agent_seed2",
+    "verdict": "signed",
+    "kind": "exploratory",
+    "reasons": [],
+    "checks": {
+      "wellformed": {
+        "passed": true,
+        "detail": "shape ok"
+      },
+      "verifiable_kind": {
+        "passed": true,
+        "detail": "kind 'comparison' has a sealed-set measurement"
+      },
+      "split_hash": {
+        "passed": true,
+        "detail": "split random (inferred from the cited evidence) hash e7edcaba59fa"
+      },
+      "evidence_resolves": {
+        "passed": true,
+        "detail": "2 evidence ids resolve"
+      },
+      "scope": {
+        "passed": true,
+        "detail": "the cited runs cover everything the claim quantifies over"
+      },
+      "control": {
+        "passed": true,
+        "detail": "not a mechanistic claim"
+      },
+      "configs_present": {
+        "passed": true,
+        "detail": "both configs present"
+      },
+      "comparisons_in_family": {
+        "passed": true,
+        "detail": "2 runs"
+      },
+      "sealed_rerun": {
+        "passed": true,
+        "detail": "sealed MAE a=0.20912 b=0.13680 (diff +0.07233)"
+      },
+      "noise_floor": {
+        "passed": true,
+        "detail": "paired bootstrap CI [0.0637, 0.080747] on 2178 molecules"
+      },
+      "val_to_test_gap": {
+        "passed": true,
+        "detail": "val->test gap a=+0.00294 b=+0.00595"
+      },
+      "direction": {
+        "passed": true,
+        "detail": "claim says E2/delta/PBE0-SVP beats E2/direct/PBE0-SVP; measured 0.13680 vs 0.20912"
+      },
+      "_p_value": 0.0
+    }
+  },
+  {
+    "seed": 3,
+    "claim_id": "agent_seed3",
+    "verdict": "rejected",
+    "kind": "exploratory",
+    "reasons": [
+      "gave_up: rollout produced no claim (no_tool_call)"
+    ],
+    "checks": {}
+  },
+  {
+    "seed": 4,
+    "trace": "agent_2e0f9f_seed4.jsonl",
+    "claim_id": "agent_seed4",
+    "verdict": "rejected",
+    "kind": "exploratory",
+    "reasons": [
+      "unsupported_claim: comparison claim missing config_a, config_b"
+    ],
+    "checks": {
+      "wellformed": {
+        "passed": true,
+        "detail": "shape ok"
+      },
+      "verifiable_kind": {
+        "passed": true,
+        "detail": "kind 'comparison' has a sealed-set measurement"
+      },
+      "split_hash": {
+        "passed": true,
+        "detail": "split random hash e7edcaba59fa"
+      },
+      "evidence_resolves": {
+        "passed": true,
+        "detail": "7 evidence ids resolve"
+      },
+      "scope": {
+        "passed": true,
+        "detail": "the cited runs cover everything the claim quantifies over"
+      },
+      "control": {
+        "passed": true,
+        "detail": "not a mechanistic claim"
+      },
+      "configs_present": {
+        "passed": false,
+        "detail": "comparison claim missing config_a, config_b"
+      },
+      "comparisons_in_family": {
+        "passed": true,
+        "detail": "8 runs"
+      }
+    }
+  },
+  {
+    "seed": 5,
+    "trace": "agent_d8cd87_seed5.jsonl",
+    "claim_id": "agent_seed5",
+    "verdict": "signed",
+    "kind": "exploratory",
+    "reasons": [],
+    "checks": {
+      "wellformed": {
+        "passed": true,
+        "detail": "shape ok"
+      },
+      "verifiable_kind": {
+        "passed": true,
+        "detail": "kind 'comparison' has a sealed-set measurement"
+      },
+      "split_hash": {
+        "passed": true,
+        "detail": "split random hash e7edcaba59fa"
+      },
+      "evidence_resolves": {
+        "passed": true,
+        "detail": "4 evidence ids resolve"
+      },
+      "scope": {
+        "passed": true,
+        "detail": "the cited runs cover everything the claim quantifies over"
+      },
+      "control": {
+        "passed": true,
+        "detail": "not a mechanistic claim"
+      },
+      "configs_present": {
+        "passed": true,
+        "detail": "both configs present"
+      },
+      "comparisons_in_family": {
+        "passed": true,
+        "detail": "8 runs"
+      },
+      "sealed_rerun": {
+        "passed": true,
+        "detail": "sealed MAE a=0.19251 b=0.07208 (diff +0.12042)"
+      },
+      "noise_floor": {
+        "passed": true,
+        "detail": "paired bootstrap CI [0.112357, 0.128452] on 2178 molecules"
+      },
+      "val_to_test_gap": {
+        "passed": true,
+        "detail": "val->test gap a=-0.00030 b=+0.00449"
+      },
+      "direction": {
+        "passed": true,
+        "detail": "claim says E1/delta/PBE0-SVP beats E1/direct/PBE0-SVP; measured 0.07208 vs 0.19251"
+      },
+      "_p_value": 0.0
+    }
+  },
+  {
+    "seed": 6,
+    "trace": "agent_11fe8d_seed6.jsonl",
+    "claim_id": "agent_seed6",
+    "verdict": "rejected",
+    "kind": "exploratory",
+    "reasons": [
+      "wrong_direction: the effect is real but runs the other way -- f1/cheap/PBE0-SVP beats f1/direct/PBE0-SVP by 0.00417"
+    ],
+    "checks": {
+      "wellformed": {
+        "passed": true,
+        "detail": "shape ok"
+      },
+      "verifiable_kind": {
+        "passed": true,
+        "detail": "kind 'comparison' has a sealed-set measurement"
+      },
+      "split_hash": {
+        "passed": true,
+        "detail": "split random hash e7edcaba59fa"
+      },
+      "evidence_resolves": {
+        "passed": true,
+        "detail": "2 evidence ids resolve"
+      },
+      "scope": {
+        "passed": true,
+        "detail": "the cited runs cover everything the claim quantifies over"
+      },
+      "control": {
+        "passed": true,
+        "detail": "not a mechanistic claim"
+      },
+      "configs_present": {
+        "passed": true,
+        "detail": "both configs present"
+      },
+      "comparisons_in_family": {
+        "passed": true,
+        "detail": "3 runs"
+      },
+      "sealed_rerun": {
+        "passed": true,
+        "detail": "sealed MAE a=0.01196 b=0.01613 (diff -0.00417)"
+      },
+      "noise_floor": {
+        "passed": true,
+        "detail": "paired bootstrap CI [-0.005524, -0.002794] on 2178 molecules"
+      },
+      "val_to_test_gap": {
+        "passed": true,
+        "detail": "val->test gap a=+0.00127 b=+0.00052"
+      },
+      "direction": {
+        "passed": false,
+        "detail": "claim says f1/direct/PBE0-SVP beats f1/cheap/PBE0-SVP; measured 0.01613 vs 0.01196"
+      },
+      "_p_value": 0.0
+    }
+  },
+  {
+    "seed": 7,
+    "trace": "agent_5c8220_seed7.jsonl",
+    "claim_id": "agent_seed7",
+    "verdict": "rejected",
+    "kind": "exploratory",
+    "reasons": [
+      "wrong_direction: the effect is real but runs the other way -- f1/cheap/PBE0-SVP beats f1/direct/PBE0-SVP by 0.00417"
+    ],
+    "checks": {
+      "wellformed": {
+        "passed": true,
+        "detail": "shape ok"
+      },
+      "verifiable_kind": {
+        "passed": true,
+        "detail": "kind 'comparison' has a sealed-set measurement"
+      },
+      "split_hash": {
+        "passed": true,
+        "detail": "split random hash e7edcaba59fa"
+      },
+      "evidence_resolves": {
+        "passed": true,
+        "detail": "1 evidence ids resolve"
+      },
+      "scope": {
+        "passed": true,
+        "detail": "the cited runs cover everything the claim quantifies over"
+      },
+      "control": {
+        "passed": true,
+        "detail": "not a mechanistic claim"
+      },
+      "configs_present": {
+        "passed": true,
+        "detail": "both configs present"
+      },
+      "comparisons_in_family": {
+        "passed": true,
+        "detail": "3 runs"
+      },
+      "sealed_rerun": {
+        "passed": true,
+        "detail": "sealed MAE a=0.01196 b=0.01613 (diff -0.00417)"
+      },
+      "noise_floor": {
+        "passed": true,
+        "detail": "paired bootstrap CI [-0.005524, -0.002794] on 2178 molecules"
+      },
+      "val_to_test_gap": {
+        "passed": true,
+        "detail": "val->test gap a=+0.00127 b=+0.00052"
+      },
+      "direction": {
+        "passed": false,
+        "detail": "claim says f1/direct/PBE0-SVP beats f1/cheap/PBE0-SVP; measured 0.01613 vs 0.01196"
+      },
+      "_p_value": 0.0
+    }
+  }
+]

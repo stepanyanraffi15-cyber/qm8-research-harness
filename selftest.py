@@ -170,6 +170,163 @@ def t_referee_rejects():
     return v.verdict == critic.REJECTED, f"verdict={v.verdict}; {'; '.join(v.reasons)[:90]}"
 
 
+@check("a malformed claim produces a verdict, not a traceback")
+def t_referee_total():
+    """critic.py promised this in its own comments and did not deliver it.
+
+    The audit found roughly nine of nineteen malformed shapes raising instead of
+    returning a verdict, and `Critic().audit([good, None])` dying outright, before
+    the good claim alongside it was ever reported --
+    so one bad claim cost an eight-seed sweep its whole audit. Same bug class as
+    the one already fixed in agent.py: the terminal/error path is the one the happy
+    path never exercises, so it only gets tested if a test goes looking for it.
+    """
+    import critic
+
+    good = {"id": "good", "kind": "comparison", "statement": "a real claim",
+            "scope": {"target": "E1", "split": "random"}, "evidence": ["e_absent"]}
+    malformed = [
+        None,                                                      # the one that killed audit()
+        {},                                                        # nothing at all
+        [],                                                        # not an object
+        "claim_0",                                                 # a string
+        42,
+        {"kind": "comparison", "evidence": ["e"], "scope": "random"},   # scope not a dict
+        {"kind": "comparison", "evidence": ["e"], "scope": {"target": {"E1": 1}}},
+        {"kind": "comparison", "evidence": "e_0001"},                   # evidence a string
+        {"kind": "comparison", "evidence": [None, 3]},                  # ids not strings
+        {"kind": "comparison"},                                         # no evidence field
+        {"kind": None, "evidence": []},
+        {"kind": "not_a_kind", "evidence": []},
+        {"id": 7, "kind": "comparison", "evidence": []},                # id not a string
+        {"kind": "comparison", "evidence": [], "statement": {"a": 1}},
+        {"kind": "comparison", "evidence": [], "config_a": "x", "config_b": 3},
+        {"kind": "comparison", "evidence": [], "control": ["e"]},
+        {"kind": "selective", "evidence": [], "coverage": "half"},
+        {"kind": "selective", "evidence": [], "coverage": 5},
+        {"kind": "mechanism", "evidence": ["e"], "scope": {"split": "random"}},
+        {"kind": "value", "evidence": ["e"], "scope": {"split": "random"}},
+    ]
+    verdicts = {critic.SIGNED, critic.NARROWED, critic.REJECTED}
+    c = critic.Critic()
+
+    raised = []
+    for m in malformed:
+        try:
+            v = c.adjudicate(m)
+        except Exception as exc:  # noqa: BLE001
+            raised.append(f"{str(m)[:30]} -> {type(exc).__name__}")
+            continue
+        if v.verdict not in verdicts or not v.reasons:
+            raised.append(f"{str(m)[:30]} -> {v.verdict!r} with no reason")
+    if raised:
+        return False, f"{len(raised)}/{len(malformed)} did not yield a verdict: {raised[:3]}"
+
+    # and one bad claim must not cost the others their verdicts
+    report = c.audit([good, None, {}])
+    if report["n_claims"] != 3 or report["rejected"] != 3:
+        return False, (f"audit() lost a claim: {report['n_claims']} in, "
+                       f"{report['rejected']} rejected")
+    if not report["failure_histogram"]["malformed_claim"]:
+        return False, "malformed claims are not counted in the failure histogram"
+
+    # unfalsifiable kinds are refused rather than waved through
+    signed_unverifiable = [
+        k for k in ("mechanism", "value")
+        if c.adjudicate({"id": "u", "kind": k, "statement": "s", "evidence": ["e"],
+                         "scope": {"split": "random"}}).verdict != critic.REJECTED
+    ]
+    if signed_unverifiable:
+        return False, f"kinds with no sealed measurement were not refused: {signed_unverifiable}"
+
+    return True, (f"all {len(malformed)} malformed shapes returned a verdict; "
+                  f"audit([good, None, {{}}]) reported 3; mechanism/value refused as "
+                  f"unverifiable_kind")
+
+
+@check("extra supporting evidence never makes a claim worse")
+def t_referee_scope_monotone():
+    """`_check_scope` compared evidence against scope with set equality, so citing
+    one ADDITIONAL supporting experiment could flip a claim from passing to
+    `overscoped`. A referee that punishes more evidence is training the wrong
+    behaviour. Coverage semantics fix it; over-quantification still fails."""
+    import critic
+
+    log = [
+        {"experiment_id": "e_a", "config": {"target": "E1", "split": "random",
+                                            "cheap_level": "PBE0-SVP", "method": "delta"}},
+        {"experiment_id": "e_b", "config": {"target": "f1", "split": "random",
+                                           "cheap_level": "PBE0-SVP", "method": "delta"}},
+    ]
+    c = critic.Critic(log=log)
+    base = {"id": "s", "kind": "comparison", "statement": "E1 claim",
+            "scope": {"target": "E1", "split": "random"}}
+    one = c._check_scope({**base, "evidence": ["e_a"]})
+    two = c._check_scope({**base, "evidence": ["e_a", "e_b"]})
+    over = c._check_scope({**base, "scope": {"target": "all", "split": "random"},
+                           "evidence": ["e_a", "e_b"]})
+    absent = c._check_scope({**base, "scope": {"target": "E2", "split": "random"},
+                             "evidence": ["e_a", "e_b"]})
+    ok = one[0] and two[0] and not over[0] and not absent[0]
+    return ok, (f"1 run {one[0]}, +1 supporting run {two[0]} (was False); "
+                f"target='all' on 2 of 4 {over[0]}; target='E2' with no E2 run {absent[0]}")
+
+
+@check("an omitted split is inferred from the evidence, not punished")
+def t_referee_split_inference():
+    """tools.py tells the agent to omit an axis it is not claiming about; the
+    referee used to reject exactly that as `unsupported_claim`. The harness must not
+    punish the behaviour it instructs. Disagreeing evidence is still fatal."""
+    import critic
+
+    log = [
+        {"experiment_id": "e_a", "config": {"target": "E1", "split": "random",
+                                            "cheap_level": "PBE0-SVP", "method": "direct"}},
+        {"experiment_id": "e_b", "config": {"target": "E1", "split": "random",
+                                            "cheap_level": "PBE0-SVP", "method": "delta"}},
+        {"experiment_id": "e_c", "config": {"target": "E1", "split": "scaffold",
+                                            "cheap_level": "PBE0-SVP", "method": "delta"}},
+    ]
+    c = critic.Critic(log=log)
+    base = {"id": "s", "kind": "comparison", "statement": "no split named", "scope": {}}
+    agree = c._check_split_hash({**base, "evidence": ["e_a", "e_b"]})
+    disagree = c._check_split_hash({**base, "evidence": ["e_a", "e_c"]})
+    nothing = c._check_split_hash({**base, "evidence": ["e_missing"]})
+    ok = agree[0] and not disagree[0] and not nothing[0] and "inferred" in agree[1]
+    return ok, f"agreeing: {agree[1]}; disagreeing: {disagree[1]}; none: {nothing[1]}"
+
+
+@check("direct_aug closes most of the direct-vs-delta gap")
+def t_direct_aug():
+    """The published claim was that a structure-only model is worse than doing
+    nothing and delta is the only method that survives distribution shift. Given the
+    same four cheap TDDFT numbers delta gets, direct closes most of the gap -- so the
+    old headline was a statement about input access, not about the delta
+    construction. This is the baseline that was missing."""
+    import models
+
+    out = {}
+    for split in ("random", "scaffold"):
+        out[split] = {
+            m: models.run(target="E1", method=m, cheap_level="PBE0-TZVP", split=split,
+                          speed="fast").mae
+            for m in ("cheap", "direct", "direct_aug", "delta")
+        }
+    r, s = out["random"], out["scaffold"]
+    # direct alone loses to cheap under scaffold shift; direct_aug does not, and it
+    # lands within 0.02 of delta on both splits while delta still wins.
+    ok = (s["direct"] > s["cheap"] and s["direct_aug"] < s["cheap"]
+          and r["direct_aug"] - r["delta"] < 0.01
+          and s["direct_aug"] - s["delta"] < 0.02
+          and s["delta"] < s["direct_aug"])
+    return ok, (
+        f"random: direct {r['direct']:.4f} -> direct_aug {r['direct_aug']:.4f} "
+        f"vs delta {r['delta']:.4f}; scaffold: direct {s['direct']:.4f} (worse than "
+        f"cheap {s['cheap']:.4f}) -> direct_aug {s['direct_aug']:.4f} vs delta "
+        f"{s['delta']:.4f}"
+    )
+
+
 @check("the referee narrows an over-scoped claim")
 def t_referee_narrows():
     audit = ROOT / "results" / "audit_mock.json"
@@ -265,8 +422,10 @@ def main() -> int:
     print("QM8 research harness — selftest\n")
     fast = (t_parse, t_duplication, t_alignment, t_reset, t_sealed, t_no_leak,
             t_split_integrity, t_shuffle_control, t_referee_rejects,
+            t_referee_total, t_referee_scope_monotone, t_referee_split_inference,
             t_referee_narrows, t_offline_loop)
-    findings = (t_state_ordering, t_label_efficiency, t_abstention_retracted)
+    findings = (t_state_ordering, t_label_efficiency, t_abstention_retracted,
+                t_direct_aug)
 
     print("-- harness --")
     for fn in fast:

@@ -48,8 +48,13 @@ How to work:
   show it is WRONG. An experiment that can only confirm you is not evidence.
 - A difference is only real if the paired bootstrap in `vs_best` excludes zero. Seed
   variance is 0 here because the fit is deterministic -- do not read it as a noise floor.
-- If you claim a mechanism, run a control. A result you cannot distinguish from an
-  artifact is not a result, and the referee will reject it.
+- Run a control before you believe a mechanism. A result you cannot distinguish from an
+  artifact is not a result. But note what the referee can and cannot do: it cannot
+  reproduce an intervention on the sealed set, so it will not sign a claim that rests on
+  one. Use controls to decide what to believe, then claim the comparison it can re-measure.
+- When you compare a learned method against `cheap`, compare `direct_aug` rather than
+  `direct`: `cheap` and `delta` both get the TDDFT numbers, and `direct` alone does not, so
+  direct-vs-delta measures input access rather than the delta construction.
 - `slice_error` tells you WHERE a method fails. That is usually more informative than
   another point estimate of how much it fails on average.
 

@@ -65,6 +65,13 @@ def sha256_file(path: Path) -> str | None:
 # The space both null policies draw from. It is the human's contribution, and
 # saying so is the point: an agent that cannot beat uniform sampling from this
 # space has not added anything a for-loop could not.
+# Deliberately NOT models.METHODS. These two arms are the baselines the agent arm
+# is scored against, and both were fixed before any arm was run; widening the
+# sampling space or the schedule after the fact would change the published numbers
+# and break the comparison. `direct_aug` therefore stays out of the null arms even
+# though models.py now offers it -- it belongs in the method comparison
+# (analysis/method_comparison.py), which is a separate question from "can an agent
+# search better than random".
 SPACE = {
     "target": ["E1", "E2", "f1", "f2"],
     "method": ["cheap", "direct", "delta"],

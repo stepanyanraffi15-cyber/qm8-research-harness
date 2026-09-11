@@ -1,9 +1,29 @@
-"""The prediction layer: cheap / direct / delta. No LLM anywhere near this file.
+"""The prediction layer: cheap / direct / direct_aug / delta. No LLM anywhere near this file.
 
     cheap    report the TDDFT number and do nothing. Free, and a real baseline.
     direct   predict CC2 from structure. What MoleculeNet-style models do.
     delta    predict the CC2 - TDDFT residual and add it back. Ramakrishnan's
              1988 idea applied to QM8, and the reason QM8 exists.
+
+    direct_aug
+             predict CC2 from structure AND the cheap TDDFT numbers, given to the
+             model as four extra features. This is the baseline the earlier round
+             of this project never ran, and without it the published comparison
+             was not a fair one: `direct` was denied the TDDFT calculation that
+             `delta` and `cheap` both get for free, so "structure-only learning is
+             worse than doing nothing, and delta is the only method that survives
+             distribution shift" was a statement about INPUT ACCESS dressed up as
+             a statement about the delta construction. Given the same inputs,
+             direct closes most of the gap (E1, PBE0-TZVP, fast, validation:
+             0.2297 -> 0.0649 random against delta's 0.0645; 0.3826 -> 0.0809
+             scaffold against delta's 0.0676).
+
+             The four columns are E1/E2/f1/f2 at the chosen `cheap_level` -- not
+             just the one column matching `target`. One TDDFT calculation returns
+             all four, so withholding three of them would be an artificial
+             handicap rather than a cost saving. Note what that implies: direct_aug
+             sees MORE cheap information than delta does, and delta still wins
+             under scaffold shift. That is now a claim about the construction.
 
     zero     predict 0.0 everywhere. Only meaningful for oscillator strengths,
              where the target is non-negative and 32% of molecules sit below
@@ -35,7 +55,7 @@ DERIVED = ROOT / "data" / "derived"
 
 TARGETS = ["E1", "E2", "f1", "f2"]
 CHEAP_LEVELS = ["PBE0-SVP", "PBE0-TZVP", "CAM"]
-METHODS = ["cheap", "direct", "delta", "zero"]
+METHODS = ["cheap", "direct", "direct_aug", "delta", "zero"]
 SPLITS = ["random", "scaffold", "tddft_gap"]
 
 # Two speeds, as the design calls for: fast to explore, full to claim.
@@ -192,13 +212,28 @@ def run(
         import lightgbm as lgb
 
         X = env["X"]
-        y_tr = y_ref[tr] if method == "direct" else (y_ref[tr] - y_cheap[tr])
+        if method == "direct_aug":
+            # One TDDFT calculation returns all four properties, so all four are
+            # appended -- see the module docstring on why withholding three of
+            # them would be a handicap rather than a saving.
+            #
+            # np.hstack COPIES, which is the point: the shared feature matrix in
+            # _CACHE must not be mutated, because tools.py's _ablate_mae writes into
+            # it in place and a view would corrupt every other method's fit. The
+            # copy is promoted to float64 by the targets array, which costs a
+            # transient 180MB. Casting `aug` down to float32 halves that and gave
+            # an identical MAE where it was checked, but it is not done here: every
+            # number in results/method_comparison.json was measured on this path,
+            # and a memory saving is not worth a table nobody can reproduce exactly.
+            aug = env["targets"][:, [_column(names, p, cheap_level) for p in TARGETS]]
+            X = np.hstack([X, aug])
+        y_tr = y_ref[tr] if method in ("direct", "direct_aug") else (y_ref[tr] - y_cheap[tr])
         model = lgb.LGBMRegressor(
             **SPEED[speed], random_state=seed, n_jobs=-1, verbose=-1, force_row_wise=True
         )
         model.fit(X[tr], y_tr)
         raw = model.predict(X[ev])
-        pred = raw if method == "direct" else raw + y_cheap[ev]
+        pred = raw if method in ("direct", "direct_aug") else raw + y_cheap[ev]
     fit_seconds = time.perf_counter() - t0
 
     err = np.abs(pred - y_ref[ev])
@@ -220,10 +255,12 @@ def run(
 
 
 def baseline_table(split: str = "random", speed: str = "fast", seed: int = 0) -> list[dict]:
-    """Regenerate the cheap/direct/delta comparison for every target."""
+    """Regenerate the cheap/direct/direct_aug/delta comparison for every target."""
     rows = []
     for target in TARGETS:
-        methods = ["cheap", "direct", "delta"] + (["zero"] if target.startswith("f") else [])
+        methods = ["cheap", "direct", "direct_aug", "delta"] + (
+            ["zero"] if target.startswith("f") else []
+        )
         row = {"target": target, "split": split}
         for m in methods:
             row[m] = round(run(target=target, method=m, split=split, speed=speed, seed=seed).mae, 5)
@@ -247,9 +284,11 @@ if __name__ == "__main__":
         rows = baseline_table(split=sp, speed=args.speed, seed=args.seed)
         out[sp] = rows
         print(f"\n=== {sp} split · speed={args.speed} · seed={args.seed} ===")
-        print(f"{'target':7s} {'cheap':>10s} {'direct':>10s} {'delta':>10s} {'zero':>10s}")
+        print(f"{'target':7s} {'cheap':>10s} {'direct':>10s} {'direct_aug':>12s} "
+              f"{'delta':>10s} {'zero':>10s}")
         for r in rows:
             z = f"{r['zero']:10.5f}" if "zero" in r else " " * 10
-            print(f"{r['target']:7s} {r['cheap']:10.5f} {r['direct']:10.5f} {r['delta']:10.5f} {z}")
+            print(f"{r['target']:7s} {r['cheap']:10.5f} {r['direct']:10.5f} "
+                  f"{r['direct_aug']:12.5f} {r['delta']:10.5f} {z}")
     print()
     print(json.dumps(out))
