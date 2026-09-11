@@ -22,7 +22,7 @@ Not taken on faith. Each of these was re-run against the repo's own artifacts.
 | 6 | The f1 abstention claim is a **magnitude artifact** | **CONFIRMED** | See table below. Classifier is the worst of five risk scores; magnitude-stratified null **contains** it. |
 | 8 | Claim C is false as stated | **CONFIRMED** | `direct` + 4 cheap columns: random 0.0649 vs Δ 0.0645; scaffold 0.0809 vs Δ 0.0676. |
 | 9 | 174× is left-censored | **CONFIRMED** | `SIZES` starts at 100; `17429/100 = 174.29`. The reported factor *is* the first grid row. |
-| 7, 10–14 | E1 survival, brightness discordance, DeepChem 2021, referee gaps, scoring artifact, thin traces | **accepted pending own check** | Scheduled Day 1–4 below; each is checkable in the repo. |
+| 7, 10–14 | E1 survival, brightness discordance, DeepChem 2021, referee gaps, scoring artifact, thin traces | **accepted pending own check** | Scheduled in the stages below; each is checkable in the repo. |
 
 ### The measurement that ends the flagship claim
 
@@ -80,7 +80,7 @@ survives all of them; otherwise it ships as exploratory with its failures stated
 
 ## Plan
 
-### Day 1 — integrity. Nothing else.
+### Stage 1 — integrity. Nothing else.
 
 Every item here is a place the repo contradicts itself.
 
@@ -104,7 +104,7 @@ Every item here is a place the repo contradicts itself.
 - [ ] Add `results/claims_abstention.json` + an `audit_arms.py` driver so every verdict regenerates.
 - [ ] `results/README.md` indexing what each artifact is and which command produced it.
 
-### Day 2 — retract and replace the flagship.
+### Stage 2 — retract and replace the flagship.
 
 - [ ] Add four baselines to `critic._sealed_selective` **and** the figure: cheap gap,
       \|predicted correction\|, residual-magnitude regressor, magnitude-stratified random.
@@ -116,7 +116,7 @@ Every item here is a place the repo contradicts itself.
       the number a drug-discovery reviewer asks for.
 - [ ] Add the oracle ceiling to every risk-coverage plot.
 
-### Day 3 — the replacement result, adversarially first.
+### Stage 3 — the replacement result, adversarially first.
 
 - [ ] **Verify the screening-metric claim myself** before it is promoted: AUC/AP/enrichment for Δ vs
       cheap on f1 and f2, paired CIs, magnitude stratification, bright/dark Spearman decomposition.
@@ -126,7 +126,7 @@ Every item here is a place the repo contradicts itself.
       artifact; it says nothing about an *ordering* artifact. The strawman was refuted; the live
       version stands.
 
-### Day 4 — harness, then rewrite.
+### Stage 4 — harness, then rewrite.
 
 - [ ] Fix the prompt/referee contradiction: `tools.py:593` tells the agent to omit un-claimed axes;
       `critic.py:212` rejects claims omitting `split`. Re-audit; **report both the old and new
