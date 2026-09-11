@@ -136,7 +136,11 @@ registered control (coin flip)  AUC 0.4991   CI [0.4658, 0.5310]
 0.011564, 0.013180, 0.019485 a.u., a ratio of **3.52× CI [2.85, 4.32]**. (Those figures
 are on `validation`, from `results/misorder_signature.json`, where the registered primary
 outcome was measured; the sealed battery refits the same classifier and reports AUC
-0.6988 with a coin-flip control at 0.4862 CI [0.4532, 0.518].) Scored on the sealed set,
+0.6988 with a coin-flip control at 0.4862 CI [0.4532, 0.518]. That file still records
+`"verdict": "SUPPORTED"`, which refers only to its own narrow question — is the swapped
+population separable from structure at all — and is superseded by the referee's rejection
+in `results/audit_abstention.json`. Where the two disagree, the referee is the
+authority.) Scored on the sealed set,
 selective error then falls below the random-rejection interval at every coverage, and at
 50% coverage 0.013946 → **0.011080** — a 20.6% reduction against a random-rejection null
 of 0.013954 CI [0.012426, 0.015482].
