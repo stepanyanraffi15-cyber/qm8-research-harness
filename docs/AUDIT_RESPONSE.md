@@ -60,7 +60,7 @@ maximum stakes, and it is a stronger submission than the clean win would have be
 
 Two conditions for it to land, and they are not negotiable:
 
-1. **The numbers must reconcile.** Day 1 is integrity only. A reviewer who finds the repo
+1. **The numbers must reconcile.** Stage 1 is integrity only. A reviewer who finds the repo
    contradicting itself stops trusting everything else, and every Tier-1 item is findable in under
    ten minutes.
 2. **The tone is confident, not apologetic.** Lead with what survived.
@@ -72,7 +72,7 @@ enrichment) even though it loses on MAE. **It does not become the headline until
 same controls that killed the last one.** Adopting an unverified replacement flagship would repeat,
 in the same week, the exact error being corrected.
 
-So Day 3 begins with an adversarial pass on the *new* claim: magnitude stratification, free
+So Stage 3 begins with an adversarial pass on the *new* claim: magnitude stratification, free
 baselines, a bright/dark decomposition, and the oracle ceiling. It ships as the lead only if it
 survives all of them; otherwise it ships as exploratory with its failures stated.
 
@@ -153,7 +153,7 @@ Stated first in the rewrite, not last.
    over 20,000 noise draws against 2.5% nominal; the coin-flip control clears 0 times in 40 fits.
    The machinery works. It was aimed at the wrong null, which is a different and fixable problem.
 2. ~~**E1 abstention is real and mechanism-driven**, and beats every rival including the
-   magnitude-stratified control.~~ **SUPERSEDED by this document's own Day 2 verification.**
+   magnitude-stratified control.~~ **SUPERSEDED by this document's own Stage 2 verification.**
    E1 is the one rule that clears the magnitude-stratified null, so the mechanism is real —
    but on the sealed set a *free* cheap-gap threshold beats it (0.056862 vs 0.059528), so
    the 1036 features buy nothing. The audit's survival figures (0.05182 / 0.057493)
