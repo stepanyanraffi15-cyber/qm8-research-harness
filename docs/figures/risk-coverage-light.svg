@@ -1,7 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 380" width="720" height="380" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">
 <rect width="720" height="380" fill="#fcfcfb"/>
-<text x="62" y="20" font-size="14" font-weight="600" fill="#0b0b0b">Abstention beats random rejection at every coverage — sealed test set</text>
-<text x="62" y="368" font-size="11" fill="#8a8a85">coverage — fraction of molecules kept (f1, delta, random split, sealed test n=2,178)</text>
+<text x="62" y="20" font-size="14" font-weight="600" fill="#0b0b0b">Abstention beats random rejection — and that is the wrong bar</text>
+<text x="62" y="368" font-size="11" fill="#8a8a85">RETRACTED — two FREE rules beat this classifier at 50% coverage: cheap E2-E1 gap 0.00803, |predicted correction| 0.00432</text>
+<text x="62" y="353" font-size="11" fill="#8a8a85">coverage — fraction of molecules kept (f1, delta, random split, sealed test n=2,178)</text>
 <line x1="62" y1="328.0" x2="570" y2="328.0" stroke="#e6e5e1" stroke-width="1"/>
 <text x="54" y="332.0" font-size="10.5" text-anchor="end" fill="#8a8a85">0.010</text>
 <line x1="62" y1="279.0" x2="570" y2="279.0" stroke="#e6e5e1" stroke-width="1"/>

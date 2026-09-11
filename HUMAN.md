@@ -269,6 +269,71 @@ pre-registration exists to prevent.
 
 ---
 
+### 2026-09-10/11 · the audit, and four retractions
+
+An external review found the flagship claim did not survive and that several numbers in the
+repo did not reconcile. Eight load-bearing findings were re-run against the repo's own
+artifacts before being accepted; all eight confirmed. What follows is what that cost.
+
+**The pattern, which is now the project's actual result.** Every headline claim failed the
+same way — report the slice where the effect appears, omit the slices where it does not.
+
+1. **f1 abstention — RETRACTED.** The headline "31% error reduction" was a *validation*
+   number, printed four lines above the words "sealed-set verified". Sealed it is 20.6%,
+   and that is not the problem: two **free** rules beat the classifier (cheap E2−E1 gap
+   0.00803, |predicted correction| 0.00432 against its 0.01108), and under magnitude
+   stratification it sits inside the null. Spearman(risk, f1) = +0.383 — it learned that
+   bright molecules are risky. At 50% coverage it keeps 89 of 266 bright molecules where
+   random keeps 133 [117, 148]. In a photophysics screen it abstains on the hits.
+2. **E1 abstention — RETRACTED.** The audit proposed E1 as the claim that survived. Its
+   figures reproduce on validation; on sealed the ordering reverses (classifier 0.05953 vs
+   free gap 0.05686). **The rescue for a validation-number error was itself a validation
+   number.** Two of us, one week, the same mistake, the second while auditing for exactly it.
+3. **Screening metrics — QUALIFIED.** Δ wins on AUC/AP above f≥0.05 and loses significantly
+   at f≥0.01 (−0.028 CI [−0.045, −0.011]). The proposal quoted only the winning cuts.
+4. **Δ survives shift, direct does not — 1 OF 8.** Against `direct_aug` (direct given the
+   same cheap columns), Δ wins significantly in one cell of eight — scaffold/E1, the exact
+   cell the headline was written from.
+
+**How it hid.** The README had the split sizes swapped — validation 2,178 / sealed 2,179,
+when the truth is the reverse. Believing sealed was 2,179 made `n_kept=2179` look sealed.
+One transposed pair of numbers concealed the whole thing.
+
+**What I got wrong that was mine, not inherited.** The `--resume` I added for checkpointing
+reused report rows while `run_agent` unlinked a fixed trace path, so two of eight shipped
+traces refuted their own report rows. The underlying claim (3/8 seeds tried delta, 5.4 of 12
+experiments) reproduces exactly on clean traces — the finding was right, the evidence I
+shipped for it was not. A reviewer checking my traces would have found them contradicting my
+headline and been right to stop trusting everything else.
+
+**Harness bugs, same class as the science bugs.** The terminal `claim` tool bypassed the
+try/except every other tool had, so one bad kwarg killed a whole rollout — found when the
+clean re-run died at seed 2. The referee crashed on malformed claims despite a comment
+promising it would not. The prompt told the agent to omit axes it was not claiming about and
+the referee then rejected it for omitting them. Citing *extra* supporting evidence made a
+claim score *worse*. Two claim kinds signed without touching data. The pattern: **the code
+handling the terminal or error case is the code the happy path never exercises.**
+
+**What survives.** The state-ordering effect is real (16.4% swap rate, energy control at
+exactly 0.0%) — only the model built on it failed. `delta_log` is the one model that beats
+raw TDDFT on global ranking (f1 +0.042, f2 +0.050), with the mechanism identified: Δ improves
+the bright ranking and wrecks the dark bulk. Δ's advantage under scaffold shift on E1 holds
+against a same-inputs baseline, CI [−0.0117, −0.0056]. The parse still reproduces the 2015
+paper. selftest went 14 → 18.
+
+**Two new referee checks** did the retracting — `free_baselines` and `magnitude_control` —
+because the audit showed "beats random rejection" is a bar almost anything clears. And
+`selftest`'s own guard had been certifying the flagship on validation: the check shared the
+claim's blind spot. It now asserts the retraction and fails if the classifier ever beats
+every free baseline again.
+
+**One more instance, caught while writing this.** The README asserted that this log contained
+every retraction. It did not — it stopped before the audit entirely. Found by grepping my own
+document for a word that should have been in it. That is the fifth occurrence of the same
+failure and the reason this entry exists.
+
+---
+
 ## Open, and honestly unresolved
 
 - Whether the agent beats random search at equal budget is **not yet known**, and the

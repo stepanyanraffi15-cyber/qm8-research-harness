@@ -127,8 +127,11 @@ def risk_coverage(t: dict) -> str:
          f'font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">',
          f'<rect width="{W}" height="{H}" fill="{t["surface"]}"/>']
     o.append(f'<text x="{L}" y="20" font-size="14" font-weight="600" fill="{t["ink"]}">'
-             f'Abstention beats random rejection at every coverage — sealed test set</text>')
+             f'Abstention beats random rejection — and that is the wrong bar</text>')
     o.append(f'<text x="{L}" y="{H-12}" font-size="11" fill="{t["muted"]}">'
+             f'RETRACTED — two FREE rules beat this classifier at 50% coverage: '
+             f'cheap E2-E1 gap 0.00803, |predicted correction| 0.00432</text>')
+    o.append(f'<text x="{L}" y="{H-27}" font-size="11" fill="{t["muted"]}">'
              f'coverage — fraction of molecules kept '
              f'(f1, delta, random split, sealed test n={n_eval:,})</text>')
 

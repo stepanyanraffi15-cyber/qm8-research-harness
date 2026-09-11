@@ -152,8 +152,13 @@ Stated first in the rewrite, not last.
 1. **The referee's selective null is properly calibrated** — 2.29% empirical false-positive rate
    over 20,000 noise draws against 2.5% nominal; the coin-flip control clears 0 times in 40 fits.
    The machinery works. It was aimed at the wrong null, which is a different and fixable problem.
-2. **E1 abstention is real and mechanism-driven**, and beats every rival including the
-   magnitude-stratified control.
+2. ~~**E1 abstention is real and mechanism-driven**, and beats every rival including the
+   magnitude-stratified control.~~ **SUPERSEDED by this document's own Day 2 verification.**
+   E1 is the one rule that clears the magnitude-stratified null, so the mechanism is real —
+   but on the sealed set a *free* cheap-gap threshold beats it (0.056862 vs 0.059528), so
+   the 1036 features buy nothing. The audit's survival figures (0.05182 / 0.057493)
+   reproduce on **validation**, which is the error this whole document exists to correct.
+   Retracted alongside f1.
 3. **Δ under scaffold shift beats even a feature-augmented direct model by ~16%**
    (0.0676 vs 0.0809). This is the claim that maps to screening, and it holds in a fair fight.
 4. **The environment, parse, split hashing and selftest are solid** — 14/14, numbers re-derive.
