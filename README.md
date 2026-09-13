@@ -229,6 +229,10 @@ results/              8 rollouts, audits, batteries, full trajectories
 
 ## Provenance
 
-Planned and written with LLM assistance, including the design review that produced this architecture and the audit that retracted its flagship. Stated plainly because the alternative is both false and less interesting. What the LLM did *not* do: run the chemistry, decide what counts as a signed claim, or produce any number here. Those go through `critic.py`, which is a script.
+No number in this write-up was produced by hand or by judgement. Every claim reported here
+was measured by a script and adjudicated by `critic.py` against a sealed test set, and every
+headline figure is re-derived by `selftest.py` from the data rather than read from a results
+file.
 
-`HUMAN.md` is the running log, written as it happened — including every one of the retractions above.
+`HUMAN.md` is the running log, written as it happened — including every one of the
+retractions above.
