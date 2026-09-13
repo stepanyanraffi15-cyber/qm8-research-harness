@@ -151,10 +151,6 @@ def main() -> int:
     return 0
 
 
-if __name__ == "__main__":
-    raise SystemExit(main())
-
-
 # --------------------------------------------------------------------------
 # The deliverable this was always for: a risk-coverage curve.
 # --------------------------------------------------------------------------
@@ -166,15 +162,23 @@ if __name__ == "__main__":
 # throwing 30% away at random.
 
 
-def risk_coverage(p: np.ndarray, n_boot: int = 2000) -> dict:
-    r = models.run(target=TARGET, method="delta", cheap_level=CHEAP_LEVEL, split=SPLIT,
-                   speed="full", eval_on="validation", return_errors=True)
-    err = r.errors
+COVERAGES = (1.0, 0.9, 0.8, 0.7, 0.6, 0.5)
+
+
+def _curve(err: np.ndarray, p: np.ndarray, n_boot: int) -> dict:
+    """Error against coverage, with random rejection at matched coverage.
+
+    `err` and `p` must be aligned to the SAME partition: p[i] is the predicted
+    risk of the molecule whose delta-model error is err[i]. Getting that wrong is
+    how a validation curve ends up labelled as a sealed one.
+    """
+    if len(err) != len(p):
+        raise ValueError(f"errors ({len(err)}) and risks ({len(p)}) are different partitions")
     order = np.argsort(p)          # keep the lowest-risk molecules first
     rng = np.random.default_rng(0)
 
     rows = []
-    for cov in (1.0, 0.9, 0.8, 0.7, 0.6, 0.5):
+    for cov in COVERAGES:
         k = max(1, int(round(cov * len(err))))
         selective = float(err[order[:k]].mean())
         # random rejection at the SAME coverage, bootstrapped
@@ -192,3 +196,373 @@ def risk_coverage(p: np.ndarray, n_boot: int = 2000) -> dict:
     aurc = float(np.mean([x["selective_mae"] for x in rows]))
     return {"rows": rows, "aurc": round(aurc, 6),
             "beats_random_everywhere": all(x["beats_random"] for x in rows if x["coverage"] < 1.0)}
+
+
+def risk_coverage(p: np.ndarray, n_boot: int = 2000) -> dict:
+    """The VALIDATION curve. `p` must come from `fit_and_score`, which scores the
+    validation partition. Nothing computed here may be reported as sealed."""
+    r = models.run(target=TARGET, method="delta", cheap_level=CHEAP_LEVEL, split=SPLIT,
+                   speed="full", eval_on="validation", return_errors=True)
+    return {"eval_on": "validation", **_curve(r.errors, p, n_boot)}
+
+
+# --------------------------------------------------------------------------
+# The same curve on the partition the claim is actually adjudicated against.
+# --------------------------------------------------------------------------
+#
+# The validation curve above is what the agent is allowed to see, so it is what
+# the exploratory analysis runs on -- and it is NOT the number the write-up may
+# quote as verified. The sealed curve below is, and it is measurably weaker:
+# selective prediction has to survive the val->test gap like everything else.
+# Same construction as critic.py::_sealed_selective -- classifier fit on `train`
+# alone, scored on a partition it has never seen -- so the curve and the
+# referee's verdict cannot disagree.
+
+
+_SCORES: dict = {}
+
+
+def _risk_scores(part: str, level: str, split: str) -> np.ndarray:
+    """Predicted misordering risk for one partition, classifier fit on `train`.
+
+    Memoized because the fit is deterministic and target-independent -- the
+    label is "did the two states swap", which is a property of the molecule, so
+    the f1 and E1 adjudications are scoring the identical classifier and should
+    not pay for it twice.
+    """
+    import lightgbm as lgb
+
+    key = (part, level, split)
+    if key in _SCORES:
+        return _SCORES[key]
+
+    env = models._env()
+    X, pos = env["X"], env["positions"]
+    parts = models._split(split)
+    tr, ev = parts["train"], parts[part]
+    y = misordered_labels(level)
+
+    clf = lgb.LGBMClassifier(n_estimators=300, learning_rate=0.05, num_leaves=31,
+                             random_state=0, n_jobs=-1, verbose=-1, force_row_wise=True)
+    clf.fit(X[pos[tr]], y[tr])
+    _SCORES[key] = clf.predict_proba(X[pos[ev]])[:, 1]
+    return _SCORES[key]
+
+
+def sealed_risk_scores(level: str = CHEAP_LEVEL, split: str = SPLIT) -> np.ndarray:
+    """Predicted misordering risk for the sealed test partition."""
+    return _risk_scores("sealed_test", level, split)
+
+
+def risk_coverage_sealed(target: str = TARGET, n_boot: int = 2000) -> dict:
+    """The SEALED curve. Requires the audit token, like every sealed number."""
+    p = sealed_risk_scores()
+    r = models.run(target=target, method="delta", cheap_level=CHEAP_LEVEL, split=SPLIT,
+                   speed="full", eval_on="sealed_test", audit_token=models.AUDIT_TOKEN,
+                   return_errors=True)
+    return {"eval_on": "sealed_test", "target": target, **_curve(r.errors, p, n_boot)}
+
+
+# --------------------------------------------------------------------------
+# The controls this claim was never run against.
+# --------------------------------------------------------------------------
+#
+# Random rejection is the wrong null, and it is the wrong null in a way that
+# flatters every rule tested against it. MAE on a non-negative quantity falls
+# whenever you drop the large values, so ANY score correlated with |target|
+# clears random rejection without predicting a single error. The curve above
+# proves the classifier is not noise; it does not prove the classifier is doing
+# the thing the claim says it is doing.
+#
+# Two further questions decide that, and neither was asked before:
+#
+#   is it better than a rule that costs nothing?   cheap_gap, predicted_correction
+#   does it survive with magnitude held fixed?     the stratified null
+#
+# `oracle` is here for a third reason: a risk-coverage plot without its ceiling
+# invites the reader to score a rule against zero rather than against how much
+# of the available separation it actually captured.
+
+BRIGHT = 0.05        # f >= 0.05 a.u. is a molecule a photophysics screen exists to find
+N_STRATA = 5
+
+
+def _rows(part: str, split: str = SPLIT) -> np.ndarray:
+    """Absolute feature-matrix rows for one partition of a split."""
+    env = models._env()
+    return env["positions"][models._split(split)[part]]
+
+
+def _col(prop: str, level: str) -> int:
+    return models._env()["names"].index(f"{prop}-{level}")
+
+
+def sealed_cheap_gap_risk(level: str = CHEAP_LEVEL, split: str = SPLIT) -> np.ndarray:
+    """Rank by the cheap E2-E1 gap: near-degenerate states are where the ordering
+    is ambiguous, so a small gap is high risk.
+
+    Free. Both numbers are already sitting in the TDDFT output that the delta
+    model corrects, and nothing is fitted, so this rule costs a subtraction.
+    """
+    T = models._env()["targets"]
+    rows = _rows("sealed_test", split)
+    gap = T[rows, _col("E2", level)] - T[rows, _col("E1", level)]
+    return -gap          # ascending risk == descending gap
+
+
+def sealed_delta_correction(target: str, level: str = CHEAP_LEVEL, split: str = SPLIT,
+                            seed: int = 0) -> np.ndarray:
+    """The SIGNED correction the delta model predicts for the sealed partition.
+
+    Refit rather than reached into, but identical by construction -- same
+    features, same hyperparameters, same seed as models.run(method="delta",
+    speed="full"). `selective_battery` asserts that identity against the errors
+    models.run returns rather than assuming it.
+    """
+    import lightgbm as lgb
+
+    env = models._env()
+    T, X = env["targets"], env["X"]
+    tr, te = _rows("train", split), _rows("sealed_test", split)
+    y = T[:, _col(target, "CC2")] - T[:, _col(target, level)]
+    m = lgb.LGBMRegressor(**models.SPEED["full"], random_state=seed, n_jobs=-1,
+                          verbose=-1, force_row_wise=True)
+    m.fit(X[tr], y[tr])
+    return m.predict(X[te])
+
+
+def sealed_residual_regressor_risk(target: str, level: str = CHEAP_LEVEL, split: str = SPLIT,
+                                   seed: int = 0) -> np.ndarray:
+    """Rank by a LightGBM regressor on |CC2 - cheap|, trained on `train` alone.
+
+    Not free: it costs a second fit on the same 1036 features the classifier
+    uses. That is the point of including it -- it is the classifier's own budget
+    spent on the quantity the claim cares about (how wrong the cheap number is)
+    instead of on a proxy for it (whether two states swapped).
+    """
+    import lightgbm as lgb
+
+    env = models._env()
+    T, X = env["targets"], env["X"]
+    tr, te = _rows("train", split), _rows("sealed_test", split)
+    y = np.abs(T[:, _col(target, "CC2")] - T[:, _col(target, level)])
+    m = lgb.LGBMRegressor(n_estimators=300, learning_rate=0.05, num_leaves=31,
+                          random_state=seed, n_jobs=-1, verbose=-1, force_row_wise=True)
+    m.fit(X[tr], y[tr])
+    return m.predict(X[te])
+
+
+def magnitude_strata(target: str, split: str = SPLIT, n: int = N_STRATA) -> list[np.ndarray]:
+    """Sealed-set positions binned into |target_CC2| quantiles.
+
+    Stratifying on the TRUE magnitude is deliberate. The question is not whether
+    the rule can be defended as predicting magnitude; it is what is left of it
+    once magnitude cannot be the answer.
+    """
+    T = models._env()["targets"]
+    mag = np.abs(T[_rows("sealed_test", split), _col(target, "CC2")])
+    edges = np.quantile(mag, np.linspace(0, 1, n + 1))
+    edges[-1] += 1e-12
+    return [np.where((mag >= edges[i]) & (mag < edges[i + 1]))[0] for i in range(n)]
+
+
+def _stratified_keep(risk: np.ndarray, strata: list[np.ndarray], coverage: float) -> np.ndarray:
+    """Lowest-risk `coverage` fraction WITHIN each stratum."""
+    keep = []
+    for s in strata:
+        k = max(1, int(round(coverage * len(s))))
+        keep.append(s[np.argsort(risk[s])[:k]])
+    return np.concatenate(keep)
+
+
+def _stratified_null(err: np.ndarray, strata: list[np.ndarray], coverage: float,
+                     n_boot: int, seed: int = 0) -> np.ndarray:
+    """Random rejection matched within strata -- the null the claim needs to beat."""
+    rng = np.random.default_rng(seed)
+    draws = []
+    for _ in range(n_boot):
+        keep = [rng.choice(s, max(1, int(round(coverage * len(s)))), replace=False)
+                for s in strata]
+        draws.append(float(err[np.concatenate(keep)].mean()))
+    return np.sort(draws)
+
+
+def selective_battery(target: str = TARGET, level: str = CHEAP_LEVEL, split: str = SPLIT,
+                      coverage: float = 0.5, n_boot: int = 2000) -> dict:
+    """Every rival risk rule at one coverage, on the sealed test set.
+
+    One function so that the referee's verdict and the published table cannot
+    disagree: critic.py::_sealed_selective calls this, and so does the battery
+    driver that writes results/abstention_battery.json.
+    """
+    from scipy.stats import spearmanr
+    from sklearn.metrics import roc_auc_score
+
+    r = models.run(target=target, method="delta", cheap_level=level, split=split,
+                   speed="full", eval_on="sealed_test", audit_token=models.AUDIT_TOKEN,
+                   return_errors=True)
+    err = r.errors
+    n = len(err)
+    k = max(1, int(round(coverage * n)))
+
+    T = models._env()["targets"]
+    te = _rows("sealed_test", split)
+    y_ref = T[te, _col(target, "CC2")]
+    y_cheap = T[te, _col(target, level)]
+
+    p = sealed_risk_scores(level, split)
+    y_te = misordered_labels(level)[models._split(split)["sealed_test"]]
+    raw = sealed_delta_correction(target, level, split)
+    risks = {
+        "classifier": p,
+        "cheap_gap": sealed_cheap_gap_risk(level, split),
+        "predicted_correction": np.abs(raw),
+        "residual_regressor": sealed_residual_regressor_risk(target, level, split),
+        "oracle": err,
+    }
+    free = {"cheap_gap", "predicted_correction"}
+
+    def selective(risk):
+        return float(err[np.argsort(risk)[:k]].mean())
+
+    rules = {
+        name: {"selective_mae": round(selective(risk), 6), "free": name in free}
+        for name, risk in risks.items()
+    }
+
+    rb = np.random.default_rng(0)
+    rand = np.sort([float(err[rb.choice(n, k, replace=False)].mean()) for _ in range(n_boot)])
+
+    strata = magnitude_strata(target, split)
+    keep = _stratified_keep(p, strata, coverage)
+    null = _stratified_null(err, strata, coverage, n_boot)
+    strat_mae = float(err[keep].mean())
+
+    best_free = min((nm for nm in risks if nm in free),
+                    key=lambda nm: rules[nm]["selective_mae"])
+
+    out = {
+        "target": target,
+        "cheap_level": level,
+        "split": split,
+        "eval_on": "sealed_test",
+        "coverage": coverage,
+        "n_eval": n,
+        "n_kept": k,
+        "full_mae": round(r.mae, 6),
+        "risk_rules": rules,
+        "random_rejection": {
+            "selective_mae": round(float(rand.mean()), 6),
+            "ci95": [round(float(rand[int(0.025 * n_boot)]), 6),
+                     round(float(rand[int(0.975 * n_boot)]), 6)],
+        },
+        "best_free_baseline": {"name": best_free,
+                               "selective_mae": rules[best_free]["selective_mae"]},
+        "beats_free_baselines": bool(rules["classifier"]["selective_mae"]
+                                     < rules[best_free]["selective_mae"]),
+        "magnitude_stratified": {
+            "n_strata": len(strata),
+            "stratum_sizes": [int(len(s)) for s in strata],
+            "n_kept": int(len(keep)),
+            "selective_mae": round(strat_mae, 6),
+            "null_mae": round(float(null.mean()), 6),
+            "null_ci95": [round(float(null[int(0.025 * n_boot)]), 6),
+                          round(float(null[int(0.975 * n_boot)]), 6)],
+            "beats_null": bool(strat_mae < null[int(0.025 * n_boot)]),
+        },
+        "classifier_auc": round(float(roc_auc_score(y_te, p)), 4) if len(set(y_te)) > 1 else None,
+        "spearman_risk_vs_target": round(float(spearmanr(p, y_ref).statistic), 4),
+        # The refit above must be the same model models.run scored, or
+        # `predicted_correction` is a different model's opinion wearing its name.
+        "correction_refit_matches_delta_model": bool(
+            np.allclose(np.abs(raw + y_cheap - y_ref), err)
+        ),
+    }
+    out["bright_retention"] = _bright_retention(y_ref, p, k, n_boot) if target.startswith("f") \
+        else {"applicable": False,
+              "note": f"a brightness threshold is meaningless for {target}; "
+                      f"every molecule clears {BRIGHT} eV"}
+    return out
+
+
+def classifier_vs_free_gap(target: str = TARGET, level: str = CHEAP_LEVEL, split: str = SPLIT,
+                           coverage: float = 0.5) -> dict:
+    """The classifier against the free cheap-gap rule, on BOTH partitions.
+
+    An external review reported E1 as surviving the retraction, with the
+    classifier at 0.05182 against the free gap rule's 0.05749. Those are
+    VALIDATION numbers -- the same partition that produced the 31% headline this
+    project already withdrew. On the sealed partition the ordering reverses. So
+    the comparison is computed side by side rather than argued about: whoever
+    reads the write-up can see that the disagreement is a val->test gap and not a
+    difference of method.
+    """
+    out = {}
+    for part in ("validation", "sealed_test"):
+        kw = {"audit_token": models.AUDIT_TOKEN} if part == "sealed_test" else {}
+        r = models.run(target=target, method="delta", cheap_level=level, split=split,
+                       speed="full", eval_on=part, return_errors=True, **kw)
+        err = r.errors
+        k = max(1, int(round(coverage * len(err))))
+        rows = _rows(part, split)
+        T = models._env()["targets"]
+        gap = -(T[rows, _col("E2", level)] - T[rows, _col("E1", level)])
+        p = _risk_scores(part, level, split)
+        sel = lambda risk: round(float(err[np.argsort(risk)[:k]].mean()), 6)  # noqa: E731
+        out[part] = {
+            "n_eval": int(len(err)),
+            "full_mae": round(r.mae, 6),
+            "classifier": sel(p),
+            "cheap_gap": sel(gap),
+        }
+        out[part]["classifier_wins"] = bool(out[part]["classifier"] < out[part]["cheap_gap"])
+    out["ordering_reverses_val_to_sealed"] = bool(
+        out["validation"]["classifier_wins"] != out["sealed_test"]["classifier_wins"]
+    )
+    return out
+
+
+def _bright_retention(y_ref: np.ndarray, risk: np.ndarray, k: int, n_boot: int) -> dict:
+    """How many of the molecules a screen is looking for does the keep-set keep?
+
+    Selective MAE is indifferent to which molecules survive. A screen is not: a
+    rule that abstains on the bright tail has thrown away the answer and been
+    rewarded for it, because the bright tail is also where the errors are.
+    """
+    bright = y_ref >= BRIGHT
+    total = int(bright.sum())
+    kept = int(bright[np.argsort(risk)[:k]].sum())
+    rng = np.random.default_rng(0)
+    draws = np.sort([int(bright[rng.choice(len(y_ref), k, replace=False)].sum())
+                     for _ in range(n_boot)])
+    return {
+        "applicable": True,
+        "threshold": BRIGHT,
+        "total_bright": total,
+        "kept_by_rule": kept,
+        "kept_by_random_mean": round(float(draws.mean()), 1),
+        "kept_by_random_ci95": [int(draws[int(0.025 * n_boot)]), int(draws[int(0.975 * n_boot)])],
+        "retention_rule": round(kept / total, 4) if total else None,
+        "retention_random": round(float(draws.mean()) / total, 4) if total else None,
+    }
+
+
+def main_sealed() -> int:
+    print("risk-coverage on the SEALED test set\n")
+    out = risk_coverage_sealed()
+    full = out["rows"][0]["selective_mae"]
+    for r in out["rows"]:
+        drop = 100 * (1 - r["selective_mae"] / full)
+        print(f"  coverage {r['coverage']:.0%}  n={r['n_kept']:4d}  "
+              f"selective {r['selective_mae']:.6f}  random {r['random_mae']:.6f} "
+              f"CI {r['random_ci95']}  beats_random {str(r['beats_random']):5s}  −{drop:.1f}%")
+    print(f"\n  AURC {out['aurc']:.6f}  beats random everywhere: "
+          f"{out['beats_random_everywhere']}")
+    path = ROOT / "results" / "risk_coverage_sealed.json"
+    path.write_text(json.dumps(out, indent=2) + "\n")
+    print(f"  wrote {path}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main_sealed() if "--sealed" in sys.argv else main())

@@ -105,25 +105,37 @@ def label_budget(t: dict) -> str:
 
 
 def risk_coverage(t: dict) -> str:
-    d = json.loads((ROOT / "results" / "risk_coverage.json").read_text())
+    # SEALED test set only. The validation curve in results/risk_coverage.json is
+    # ~50% more optimistic at half coverage, and shipping it under a "sealed-set
+    # verified" caption is the exact defect this file was corrected for.
+    d = json.loads((ROOT / "results" / "risk_coverage_sealed.json").read_text())
+    if d.get("eval_on") != "sealed_test":
+        raise ValueError(
+            f"risk-coverage figure must plot the sealed partition, got {d.get('eval_on')!r}"
+        )
     rows = sorted(d["rows"], key=lambda r: -r["coverage"])
+    n_eval = rows[0]["n_kept"]
 
     W, H = 720, 380
     L, R, TP, B = 62, 150, 34, 52
     pw, ph = W - L - R, H - TP - B
     cx = lambda c: L + pw * (1.0 - c) / 0.5  # noqa: E731  coverage 1.0 -> 0.5
-    ymin, ymax = 0.007, 0.016
+    ymin, ymax = 0.010, 0.016
     cy = lambda v: TP + ph * (1 - (v - ymin) / (ymax - ymin))  # noqa: E731
 
     o = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" '
          f'font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif">',
          f'<rect width="{W}" height="{H}" fill="{t["surface"]}"/>']
     o.append(f'<text x="{L}" y="20" font-size="14" font-weight="600" fill="{t["ink"]}">'
-             f'Abstention beats random rejection at every coverage</text>')
+             f'Abstention beats random rejection — and that is the wrong bar</text>')
     o.append(f'<text x="{L}" y="{H-12}" font-size="11" fill="{t["muted"]}">'
-             f'coverage — fraction of molecules kept (f1, delta, random split)</text>')
+             f'RETRACTED — two FREE rules beat this classifier at 50% coverage: '
+             f'cheap E2-E1 gap 0.00803, |predicted correction| 0.00432</text>')
+    o.append(f'<text x="{L}" y="{H-27}" font-size="11" fill="{t["muted"]}">'
+             f'coverage — fraction of molecules kept '
+             f'(f1, delta, random split, sealed test n={n_eval:,})</text>')
 
-    for gv in (0.008, 0.010, 0.012, 0.014, 0.016):
+    for gv in (0.010, 0.011, 0.012, 0.013, 0.014, 0.015, 0.016):
         y = cy(gv)
         o.append(f'<line x1="{L}" y1="{y:.1f}" x2="{L+pw}" y2="{y:.1f}" stroke="{t["grid"]}" stroke-width="1"/>')
         o.append(f'<text x="{L-8}" y="{y+4:.1f}" font-size="10.5" text-anchor="end" fill="{t["muted"]}">{gv:.3f}</text>')
@@ -154,7 +166,7 @@ def risk_coverage(t: dict) -> str:
     half = rows[-1]
     drop = 100 * (1 - half["selective_mae"] / rows[0]["selective_mae"])
     o.append(f'<text x="{L+10}" y="{TP+ph-14}" font-size="11" fill="{t["ink"]}">'
-             f'−{drop:.0f}% error at half coverage, with no CC2 required</text>')
+             f'−{drop:.1f}% error at half coverage, with no CC2 required</text>')
     o.append("</svg>")
     return "\n".join(o)
 

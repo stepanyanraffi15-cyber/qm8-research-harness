@@ -8,23 +8,79 @@ ChemCrow found GPT-4 could not separate confidently-wrong chemistry from correct
 chemistry, and trajectory judges show *argument blindness* -- failing to notice a
 wrong value passed to a tool (BabelJudge). A held-out number is not persuadable.
 
-Eight checks, in order. The first three catch fabrication and leakage; those
+Eleven checks, in order (0-10). The first three catch fabrication and leakage; those
 existed in the earlier design. The rest catch the failures that actually occur in
 ML research, and did not:
 
-  1 split hash        the claim was measured on the partition it names
+  0 well-formedness   the submission is a claim at all
+  1 split hash        the claim was measured on the partition it names, or on the
+                      one its cited evidence agrees on
   2 evidence resolves every cited experiment is in the log
   3 sealed re-run     re-scored at full precision on the sealed test set
   4 noise floor       the effect exceeds a paired bootstrap CI over molecules
   5 direction         the effect runs the way the claim says it does
-  6 multiplicity      Holm correction over the configs actually compared
-  7 scope             the claim's quantifier matches the configs actually run
+  6 multiplicity      Holm over the confirmatory family (audit()); the runs tried
+                      in a claim's family are counted and reported beside it
+  7 scope             the evidence COVERS everything the claim quantifies over
   8 control           a mechanistic claim has a control experiment
+  9 rival baselines   a selective rule beats free rules and a stratified null
+ 10 verifiable kind   the claim is of a kind this file can measure on sealed data
+
+Check 10 exists because `kind="mechanism"` and `kind="value"` reached SIGNED
+without a single sealed-set number being computed: only the `comparison` and
+`selective` branches below touch data, so every other kind fell through to the
+default verdict of SIGNED. A claim that cannot be falsified must not be signable,
+so those kinds are now REJECTED as `unverifiable_kind` and removed from the
+agent's tool enum. The alternative -- inventing a sealed measurement for them --
+was rejected because neither kind carries the structure to support one: a
+mechanism claim names an intervention (`reindex_states`, `ablate_features`) that
+lives in tools.py as a mutation of the target table and has no representation in
+models.run, so the referee cannot reproduce it on the sealed partition at all;
+and a `value` claim carries no asserted number to compare a re-measurement
+against. Refusing to sign is the honest verdict; adding a measurement that does
+not exist would have been the dishonest one.
+
+Check 0 exists because this file promised a verdict rather than a traceback and
+did not deliver one: roughly half of the malformed claim shapes raised, and a
+single `None` in the list took down the whole audit. `adjudicate` and `audit` are
+now total -- every input yields a verdict, and an unexpected exception inside a
+check becomes a `referee_error` rejection rather than a lost audit. This is the
+same bug class as the one fixed in agent.py: the terminal path is the one the
+happy path never exercises.
+
+Checks 1 and 7 are deliberately permissive in one direction and strict in the
+other. The claim tool tells the agent to omit an axis it is not claiming about,
+so omitting `split` cannot also be an `unsupported_claim` -- the partition is
+read off the cited runs, and only a disagreement between them (or no cited run at
+all) is fatal. And check 7 tests COVERAGE, not equality: a claim scoped to
+target="E1" needs the evidence to include E1 runs, not to consist only of them.
+Set equality meant that citing one additional supporting experiment could flip a
+claim from signed to overscoped, which punishes exactly the behaviour a referee
+should reward.
 
 Check 5 was added because a real agent rollout produced a claim that was exactly
 backwards -- "direct beats cheap for f1" when cheap wins by 0.004 a.u. -- and an
 earlier version of this file SIGNED it. Verifying that a difference is real is
 not the same as verifying it points the way the claim says.
+
+Check 9 was added because this file SIGNED the project's flagship claim, and the
+claim was wrong. Selective prediction on f1 cleared every bar above -- a
+pre-registered hypothesis, a sealed re-run, a random-rejection null it beat
+comfortably, a coin-flip control that came out flat -- and it was still an
+artifact. Random rejection is the wrong null: MAE on a non-negative target falls
+whenever you drop the large values, so any score correlated with |target| clears
+it without predicting a single error. The classifier was ranking molecules by
+brightness (Spearman +0.38 against f1_CC2), and abstaining on the bright ones is
+exactly what a photophysics screen must not do. Two questions settle it, and
+neither is a statistical refinement of the first:
+
+  is the rule better than one that costs nothing?  cheap_gap, predicted_correction
+  does it survive with magnitude held fixed?       the stratified null
+
+A rule beaten by a free rule is not worth its features; a rule inside the
+stratified null is measuring magnitude, not error. Either is fatal, and the
+labels say which -- `free_baseline_dominates` and `magnitude_artifact` are
+different diagnoses with different fixes.
 
 Check 3 is why this file holds the audit token. Checks 5 and 6 need the log
 rather than the claim, because a claim's own account of how many things were
@@ -61,6 +117,32 @@ ALPHA = 0.05
 
 SIGNED, NARROWED, REJECTED = "signed", "narrowed", "rejected"
 
+# Kinds this file can put a held-out number behind. `mechanism` and `value` are
+# recognised -- a claim file or an older trace may carry them, and _check_control
+# still applies to a mechanism claim -- but they are not signable, because nothing
+# below measures them. See the module docstring, check 10.
+SIGNABLE_KINDS = ("comparison", "selective")
+KNOWN_KINDS = ("comparison", "selective", "mechanism", "value")
+
+
+def _misorder_signature():
+    """The sealed selective-prediction measurements, imported lazily.
+
+    `analysis/` is a directory of scripts rather than an installed package, so
+    the import is deferred to the one method that needs it: importing critic.py
+    must not depend on the repository layout, and only selective claims pay for
+    it. Sharing the module is deliberate -- the alternative is two copies of the
+    sealed-scoring construction, and the copy that drifts is the one nobody is
+    adjudicating against.
+    """
+    import sys
+
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from analysis import misorder_signature
+
+    return misorder_signature
+
 # Failure labels. A pass rate tells you nothing about what to fix; a histogram of
 # named failure modes does, which is why every rejection carries one.
 FAILURES = [
@@ -71,7 +153,85 @@ FAILURES = [
     "no_control",
     "gave_up",
     "abstained_on_findable",
+    "magnitude_artifact",
+    "free_baseline_dominates",
+    # A submission that is not a claim, and a claim of a kind that cannot be
+    # measured on held-out data, are both referee-side failures worth counting
+    # separately: the first is a bug in whatever produced the claim, the second is
+    # an agent asking to be believed without offering anything falsifiable.
+    "malformed_claim",
+    "unverifiable_kind",
+    # Reserved for a check that raised. It should stay at zero; if it does not,
+    # the histogram says so instead of the audit dying.
+    "referee_error",
 ]
+
+
+def _as_dict(value) -> dict:
+    """A dict, or an empty one. Used wherever a field is optional in the schema."""
+    return value if isinstance(value, dict) else {}
+
+
+def shape_problems(claim) -> list[str]:
+    """Everything wrong with a submission's SHAPE, before any measurement.
+
+    Separate from the checks below because a malformed claim has no measurable
+    content: there is nothing to adjudicate, only something to report. Returning a
+    list rather than raising is the whole point -- `adjudicate` must be total.
+    """
+    if not isinstance(claim, dict):
+        return [f"claim is {type(claim).__name__}, not an object"]
+
+    problems = []
+    cid = claim.get("id")
+    if cid is not None and not isinstance(cid, str):
+        problems.append(f"id is {type(cid).__name__}, not a string")
+
+    kind = claim.get("kind")
+    if not isinstance(kind, str) or not kind:
+        problems.append(f"kind is {kind!r}, not a claim kind")
+    elif kind not in KNOWN_KINDS:
+        problems.append(f"kind {kind!r} is not one of {list(KNOWN_KINDS)}")
+
+    if not isinstance(claim.get("statement", ""), str):
+        problems.append(f"statement is {type(claim.get('statement')).__name__}, not a string")
+
+    scope = claim.get("scope")
+    if scope is not None and not isinstance(scope, dict):
+        problems.append(f"scope is {type(scope).__name__}, not an object")
+    elif isinstance(scope, dict):
+        for key, val in scope.items():
+            ok = isinstance(val, str) or (
+                isinstance(val, (list, tuple))
+                and all(isinstance(x, str) for x in val)
+            )
+            if not ok:
+                problems.append(f"scope[{key!r}] is {val!r}, not a value or list of values")
+
+    ev = claim.get("evidence")
+    if ev is None:
+        problems.append("no evidence field")
+    elif isinstance(ev, (str, bytes)) or not isinstance(ev, (list, tuple)):
+        problems.append(f"evidence is {type(ev).__name__}, not a list of experiment ids")
+    elif not all(isinstance(i, str) for i in ev):
+        problems.append("evidence contains an id that is not a string")
+
+    for key in ("config_a", "config_b"):
+        cfg = claim.get(key)
+        if cfg is not None and not isinstance(cfg, dict):
+            problems.append(f"{key} is {type(cfg).__name__}, not an object")
+
+    ctrl = claim.get("control")
+    if ctrl is not None and not isinstance(ctrl, str):
+        problems.append(f"control is {type(ctrl).__name__}, not an experiment id")
+
+    cov = claim.get("coverage")
+    if cov is not None and (isinstance(cov, bool) or not isinstance(cov, (int, float))):
+        problems.append(f"coverage is {cov!r}, not a number")
+    elif isinstance(cov, (int, float)) and not 0.0 < float(cov) <= 1.0:
+        problems.append(f"coverage {cov!r} is not a fraction in (0, 1]")
+
+    return problems
 
 
 # --------------------------------------------------------------------------
@@ -207,12 +367,33 @@ class Critic:
     # -- individual checks ------------------------------------------------
 
     def _check_split_hash(self, claim: dict) -> tuple[bool, str]:
-        split = claim.get("scope", {}).get("split")
+        """Pin the claim to a partition by hash, inferring it when the claim omits it.
+
+        tools.py tells the agent "omit an axis you are not claiming about", and an
+        earlier version of this check then rejected every claim that did so as
+        `unsupported_claim`. The instruction and the referee have to agree, and the
+        agent's instruction is the one worth keeping: an omitted `split` is not a
+        refusal to name a partition, it is a claim that does not quantify over
+        that axis. Every logged run carries `config.split`, so the partition is
+        recoverable from the evidence. It is fatal only when the evidence cannot
+        answer -- no cited run, or cited runs that disagree, in which case there is
+        no single partition to hash and no honest way to pick one.
+        """
+        split = _as_dict(claim.get("scope")).get("split")
+        inferred = False
         if not split:
-            return False, "claim names no split"
-        if split not in self.hashes:
+            seen = sorted({c.get("split") for c in self._configs_behind(claim) if c.get("split")})
+            if not seen:
+                return False, "claim names no split and no cited run carries one"
+            if len(seen) > 1:
+                return False, (f"claim names no split and the cited runs disagree "
+                               f"about it: {seen}")
+            split, inferred = seen[0], True
+        if not isinstance(split, str) or split not in self.hashes:
             return False, f"unknown split {split!r}"
-        return True, f"split {split} hash {self.hashes[split]['sealed_test']['sha256'][:12]}"
+        h = self.hashes[split]["sealed_test"]["sha256"][:12]
+        return True, (f"split {split} (inferred from the cited evidence) hash {h}"
+                      if inferred else f"split {split} hash {h}")
 
     def _check_evidence(self, claim: dict) -> tuple[bool, str]:
         ids = claim.get("evidence", [])
@@ -225,11 +406,22 @@ class Critic:
         return True, f"{len(ids)} evidence ids resolve"
 
     def _check_scope(self, claim: dict) -> tuple[bool, str]:
-        """The claim may not quantify over configurations that were never run."""
-        scope = claim.get("scope", {})
-        ids = set(claim.get("evidence", []))
-        runs = [e for e in self.log if e.get("experiment_id") in ids]
-        if not runs:
+        """The claim may not quantify over configurations that were never run.
+
+        COVERAGE, not equality. This check used to compare the set of values in the
+        cited runs against the claimed scope with `==`, which made additional
+        evidence a liability: a claim scoped to target="E1" passed while it cited
+        one E1 run and flipped to `overscoped` the moment a second, supporting E1/f1
+        pair was cited alongside it. More evidence must never make a claim worse, so
+        the test is whether the evidence COVERS what the claim quantifies over.
+
+        A claim remains overscoped when it quantifies beyond its evidence --
+        target="all" with one target run, or target="E2" with no E2 run behind it.
+        That is the failure this check was built for, and it still fires.
+        """
+        scope = _as_dict(claim.get("scope"))
+        configs = self._configs_behind(claim)
+        if not configs:
             return False, "no logged runs behind the claim"
         universes = {
             "target": set(models.TARGETS),
@@ -238,18 +430,40 @@ class Critic:
         }
         for key, universe in universes.items():
             claimed = scope.get(key)
-            seen = {r["config"].get(key) for r in runs}
+            seen = {c.get(key) for c in configs if c.get(key) is not None}
             if claimed is None:
                 # Not quantified on this axis. Absence of a claim is not a claim,
                 # so this is not a failure -- the axis is simply reported as the
                 # values actually run when the verdict is written.
                 continue
             if claimed == "all":
-                if seen != universe:
-                    return False, f"claims all {key}s but only ran {sorted(seen)}"
-            elif seen != {claimed}:
+                missing = sorted(universe - seen)
+                if missing:
+                    return False, (f"claims all {key}s but never ran {missing} "
+                                   f"(ran {sorted(seen)})")
+            elif isinstance(claimed, (list, tuple, set)):
+                missing = sorted(set(claimed) - seen)
+                if missing:
+                    return False, (f"claims {key} in {sorted(set(claimed))} but never ran "
+                                   f"{missing} (ran {sorted(seen)})")
+            elif claimed not in seen:
                 return False, f"claims {key}={claimed!r} but ran {sorted(seen)}"
-        return True, "quantifier matches the configs run"
+        return True, "the cited runs cover everything the claim quantifies over"
+
+    def _check_kind(self, claim: dict) -> tuple[bool, str]:
+        """A claim the referee cannot measure on held-out data must not be signable.
+
+        `mechanism` and `value` used to reach SIGNED with zero rows of sealed data
+        touched, because only the two branches below compute anything and every
+        other kind fell through to the default verdict. See the module docstring.
+        """
+        kind = claim.get("kind")
+        if kind in SIGNABLE_KINDS:
+            return True, f"kind {kind!r} has a sealed-set measurement"
+        return False, (
+            f"kind {kind!r} has no sealed-set measurement in this referee, so signing it "
+            f"would assert a finding no held-out number stands behind"
+        )
 
     def _check_configs(self, claim: dict) -> tuple[bool, str]:
         """A comparison claim must actually name the two things being compared.
@@ -268,6 +482,17 @@ class Critic:
         return True, "both configs present"
 
     def _check_control(self, claim: dict) -> tuple[bool, str]:
+        """Mechanistic claims need a control experiment.
+
+        Note on reachability: `verifiable_kind` already rejects kind="mechanism"
+        because the referee cannot reproduce an intervention on the sealed set, so
+        this check can no longer be the DECIDING reason for such a claim -- both
+        reasons fire together and the verdict is rejected either way. It is kept,
+        not deleted, because it is the check that must come back if `intervene`
+        ever becomes sealed-reproducible, and because the two reasons are
+        different diagnoses: "unverifiable by construction" versus "verifiable but
+        uncontrolled". Removing it would lose that distinction from the histogram.
+        """
         if claim.get("kind") != "mechanism":
             return True, "not a mechanistic claim"
         ctrl = claim.get("control")
@@ -279,15 +504,21 @@ class Critic:
         return True, f"control {ctrl} present"
 
     def _runs_behind(self, claim: dict) -> list[dict]:
-        ids = set(claim.get("evidence", []))
-        return [e for e in self.log if e.get("experiment_id") in ids and "config" in e]
+        ev = claim.get("evidence")
+        ids = set(ev) if isinstance(ev, (list, tuple, set)) else set()
+        return [e for e in self.log
+                if e.get("experiment_id") in ids and isinstance(e.get("config"), dict)]
+
+    def _configs_behind(self, claim: dict) -> list[dict]:
+        """The config dicts of the cited runs. One accessor, so a log row missing or
+        mistyping `config` can never reach a check as a KeyError."""
+        return [e["config"] for e in self._runs_behind(claim)]
 
     def _observed_scope(self, claim: dict) -> dict:
         """What the cited runs actually cover, per axis."""
-        runs = self._runs_behind(claim)
         out = {}
         for key in ("target", "split", "cheap_level"):
-            seen = sorted({r["config"].get(key) for r in runs if r["config"].get(key)})
+            seen = sorted({c.get(key) for c in self._configs_behind(claim) if c.get(key)})
             if seen:
                 out[key] = seen[0] if len(seen) == 1 else seen
         return out
@@ -303,26 +534,75 @@ class Critic:
         observed = self._observed_scope(claim)
         target, split = observed.get("target"), observed.get("split")
         if isinstance(target, list) or isinstance(split, list) or target is None:
-            # heterogeneous family: count everything sharing the split
-            return sum(1 for e in self.log
-                       if e.get("config", {}).get("split") == (split if isinstance(split, str) else None)
-                       or split is None)
+            # Heterogeneous family (scope spans several splits or targets, or
+            # names none): count every logged run whose split is among those the
+            # claim actually covers. The previous expression compared each row's
+            # split against None and OR-ed with `split is None`, so for a list
+            # scope BOTH sides were false for every row and the count came out 0.
+            # That count is REPORTED, not enforced: it is the
+            # `comparisons_in_family` detail beside each verdict, so the bug hid
+            # the best-of-N context from a reader of exactly the multi-split
+            # claims that most need it. It never reached Holm, which `audit()`
+            # runs over the confirmatory claims' p-values independently of this.
+            covered = (set(split) if isinstance(split, list)
+                       else {split} if isinstance(split, str) else None)
+            return sum(
+                1 for e in self.log
+                if covered is None
+                or _as_dict(e.get("config")).get("split") in covered
+            )
         return sum(
             1
             for e in self.log
-            if e.get("config", {}).get("target") == target
-            and e.get("config", {}).get("split") == split
+            if _as_dict(e.get("config")).get("target") == target
+            and _as_dict(e.get("config")).get("split") == split
         )
 
     # -- the audit --------------------------------------------------------
 
-    def adjudicate(self, claim: dict) -> Verdict:
+    def _claim_kind(self, cid: str) -> str:
+        return "confirmatory" if cid in self.prereg["claims"] else "exploratory"
+
+    def adjudicate(self, claim) -> Verdict:
+        """Adjudicate one claim. TOTAL: every input returns a Verdict, nothing raises.
+
+        The shape check runs first and outside the try, because a malformed claim has
+        no content to measure; anything that escapes a real check becomes a
+        `referee_error` rejection rather than a lost audit. The promise that a bad
+        claim yields a verdict rather than a traceback is only worth making if the
+        code enforces it, and for nine of nineteen malformed shapes it did not.
+        """
+        cid = claim.get("id", "?") if isinstance(claim, dict) else "?"
+        if not isinstance(cid, str):
+            cid = "?"
+
+        problems = shape_problems(claim)
+        if problems:
+            detail = "; ".join(problems)
+            return Verdict(
+                claim_id=cid, verdict=REJECTED, kind=self._claim_kind(cid),
+                reasons=[f"malformed_claim: {detail}"],
+                checks={"wellformed": {"passed": False, "detail": detail}},
+            )
+
+        try:
+            return self._adjudicate(claim)
+        except Exception as exc:  # noqa: BLE001
+            detail = f"{type(exc).__name__}: {exc}"
+            return Verdict(
+                claim_id=cid, verdict=REJECTED, kind=self._claim_kind(cid),
+                reasons=[f"referee_error: {detail}"],
+                checks={"wellformed": {"passed": True, "detail": "shape ok"},
+                        "referee_error": {"passed": False, "detail": detail}},
+            )
+
+    def _adjudicate(self, claim: dict) -> Verdict:
         cid = claim.get("id", "?")
-        registered = cid in self.prereg["claims"]
-        kind = "confirmatory" if registered else "exploratory"
-        v = Verdict(claim_id=cid, verdict=SIGNED, kind=kind)
+        v = Verdict(claim_id=cid, verdict=SIGNED, kind=self._claim_kind(cid))
+        v.checks["wellformed"] = {"passed": True, "detail": "shape ok"}
 
         for name, fn in (
+            ("verifiable_kind", self._check_kind),
             ("split_hash", self._check_split_hash),
             ("evidence_resolves", self._check_evidence),
             ("scope", self._check_scope),
@@ -335,6 +615,7 @@ class Critic:
                 v.verdict = REJECTED
                 v.reasons.append(
                     {
+                        "verifiable_kind": "unverifiable_kind",
                         "split_hash": "unsupported_claim",
                         "evidence_resolves": "unsupported_claim",
                         "scope": "overscoped",
@@ -349,9 +630,12 @@ class Critic:
 
         # Scope failures are narrowable rather than fatal: the evidence is sound,
         # the quantifier is not. Rewrite the claim to what the log supports.
+        # An unverifiable kind is NOT narrowable -- narrowing the quantifier on a
+        # claim nothing can measure still leaves nothing measured.
         if v.verdict == REJECTED and all(
             v.checks[k]["passed"]
-            for k in ("split_hash", "evidence_resolves", "control", "configs_present")
+            for k in ("verifiable_kind", "split_hash", "evidence_resolves",
+                      "control", "configs_present")
         ):
             v.verdict = NARROWED
             # Narrow to what the LOG supports, not to what the claim asserted.
@@ -385,6 +669,26 @@ class Critic:
                 "detail": (f"coin-flip control AUC {stat['control_auc']:.4f} "
                            f"CI {stat['control_auc_ci']}"),
             }
+            # Check 9, in two halves. A rule can fail either without failing the
+            # other, and they are not the same finding: losing to a free rule
+            # means the features bought nothing, while sitting inside the
+            # stratified null means the rule was never ranking error at all.
+            v.checks["free_baselines"] = {
+                "passed": stat["beats_free_baselines"],
+                "detail": (f"proposed rule {stat['selective_mae']:.6f} vs best free rule "
+                           f"{stat['best_free']['name']} "
+                           f"{stat['best_free']['selective_mae']:.6f}"),
+            }
+            v.checks["magnitude_control"] = {
+                "passed": stat["beats_stratified_null"],
+                "detail": stat["stratified_summary"],
+            }
+            # The full battery rides along, the way `scope` carries its observed
+            # values: a verdict that only asserts a rule lost cannot be checked
+            # without re-running the referee.
+            v.checks["rival_risk_rules"] = {"passed": True, "detail": stat["rival_summary"],
+                                            "battery": stat["battery"]}
+
             if not stat["beats_random"]:
                 v.verdict = REJECTED
                 v.reasons.append(
@@ -397,6 +701,24 @@ class Critic:
                     f"no_control: the coin-flip control also separates "
                     f"(AUC {stat['control_auc']:.3f}), so the signal is not misordering"
                 )
+            else:
+                if not stat["beats_stratified_null"]:
+                    v.verdict = REJECTED
+                    b = stat["battery"]["magnitude_stratified"]
+                    v.reasons.append(
+                        f"magnitude_artifact: with |{stat['target']}| held fixed within "
+                        f"quintiles the rule scores {b['selective_mae']:.6f} against a "
+                        f"stratified null of {b['null_ci95']} -- it is ranking magnitude "
+                        f"(Spearman {stat['battery']['spearman_risk_vs_target']:+.3f}), "
+                        f"not error"
+                    )
+                if not stat["beats_free_baselines"]:
+                    v.verdict = REJECTED
+                    v.reasons.append(
+                        f"free_baseline_dominates: {stat['best_free']['name']} costs nothing "
+                        f"and scores {stat['best_free']['selective_mae']:.6f} against the "
+                        f"proposed rule's {stat['selective_mae']:.6f}"
+                    )
             return v
 
         if claim.get("kind") == "comparison":
@@ -441,17 +763,27 @@ class Critic:
     def _sealed_selective(self, claim: dict) -> dict:
         """Adjudicate a selective-prediction claim on the sealed test set.
 
-        The abstention result is the project's most useful finding and it does not
-        fit the two-config comparison path, so it gets its own verifier rather
-        than being reported as "strong evidence" and left unaudited.
+        The abstention result does not fit the two-config comparison path, so it
+        gets its own verifier rather than being reported as "strong evidence" and
+        left unaudited.
 
-        Everything is refit from `train` only. The risk classifier never sees the
-        sealed partition it scores, and the baseline is random rejection at the
-        SAME coverage -- a model that looks good discarding 30% of molecules has
-        proven nothing until it beats throwing 30% away at random.
+        Everything is refit from `train` only; the risk classifier never sees the
+        sealed partition it scores. The baseline used to be random rejection at
+        the same coverage, and that baseline is kept -- but it is no longer
+        sufficient, and the module docstring says why. Alongside it the rule is
+        now scored against the rules it has to be better than to be worth
+        anything: two that cost nothing, one that spends the same training budget
+        on the question that matters, the oracle ceiling, and a null that
+        randomises within |target| quintiles so magnitude cannot be the answer.
+
+        The measurement lives in analysis.misorder_signature.selective_battery,
+        which the published table is generated from too -- one implementation, so
+        the referee's verdict and the write-up's table cannot disagree.
         """
         import lightgbm as lgb
         from sklearn.metrics import roc_auc_score
+
+        misorder = _misorder_signature()
 
         cfg = claim.get("config_b") or {}
         target = cfg.get("target", "f1")
@@ -460,61 +792,64 @@ class Critic:
         coverage = float(claim.get("coverage", 0.5))
 
         env = models._env()
-        names, T, pos, X = env["names"], env["targets"], env["positions"], env["X"]
+        pos, X = env["positions"], env["X"]
         parts = models._split(split)
         tr, te = parts["train"], parts["sealed_test"]
 
-        def misordered(idx):
-            i = lambda pr, lv: names.index(f"{pr}-{lv}")  # noqa: E731
-            f1c, f2c = T[pos[idx], i("f1", "CC2")], T[pos[idx], i("f2", "CC2")]
-            f1t, f2t = T[pos[idx], i("f1", level)], T[pos[idx], i("f2", level)]
-            given = np.abs(f1t - f1c) + np.abs(f2t - f2c)
-            swap = np.abs(f2t - f1c) + np.abs(f1t - f2c)
-            return (swap < given).astype(int)
+        y = misorder.misordered_labels(level)
+        y_tr, y_te = y[tr], y[te]
 
-        y_tr, y_te = misordered(tr), misordered(te)
+        b = misorder.selective_battery(target, level, split, coverage)
 
-        def fit(labels):
-            clf = lgb.LGBMClassifier(n_estimators=300, learning_rate=0.05, num_leaves=31,
-                                     random_state=0, n_jobs=-1, verbose=-1,
-                                     force_row_wise=True)
-            clf.fit(X[pos[tr]], labels)
-            return clf.predict_proba(X[pos[te]])[:, 1]
-
-        p = fit(y_tr)
+        # CONTROL: the same pipeline predicting a coin flip. If this separates,
+        # the classifier is memorising the training set rather than reading
+        # structure, and no amount of downstream MAE means anything.
         rng = np.random.default_rng(999)
-        p_ctrl = fit((rng.random(len(y_tr)) < y_tr.mean()).astype(int))
-
-        r = models.run(target=target, method="delta", cheap_level=level, split=split,
-                       speed="full", eval_on="sealed_test",
-                       audit_token=models.AUDIT_TOKEN, return_errors=True)
-        err = r.errors
-        k = max(1, int(round(coverage * len(err))))
-        selective = float(err[np.argsort(p)[:k]].mean())
-
-        rb = np.random.default_rng(0)
-        rand = np.sort([float(err[rb.choice(len(err), k, replace=False)].mean())
-                        for _ in range(2000)])
-        lo, hi = float(rand[50]), float(rand[1950])
+        ctrl = lgb.LGBMClassifier(n_estimators=300, learning_rate=0.05, num_leaves=31,
+                                  random_state=0, n_jobs=-1, verbose=-1, force_row_wise=True)
+        ctrl.fit(X[pos[tr]], (rng.random(len(y_tr)) < y_tr.mean()).astype(int))
+        p_ctrl = ctrl.predict_proba(X[pos[te]])[:, 1]
 
         ctrl_auc = float(roc_auc_score(y_te, p_ctrl)) if len(set(y_te)) > 1 else 0.5
         ab = np.random.default_rng(1)
         idx = ab.integers(0, len(p_ctrl), size=(500, len(p_ctrl)))
         caucs = np.sort([roc_auc_score(y_te[j], p_ctrl[j]) for j in idx if len(set(y_te[j])) > 1])
 
+        selective = b["risk_rules"]["classifier"]["selective_mae"]
+        rand_mae = b["random_rejection"]["selective_mae"]
+        lo, hi = b["random_rejection"]["ci95"]
+        strat = b["magnitude_stratified"]
+        best_free = b["best_free_baseline"]
+
+        rivals = ", ".join(
+            f"{n} {r['selective_mae']:.6f}" + (" (free)" if r["free"] else "")
+            for n, r in b["risk_rules"].items() if n != "classifier"
+        )
+
         return {
             "coverage": coverage,
-            "full_mae": r.mae,
+            "target": target,
+            "full_mae": b["full_mae"],
             "selective_mae": selective,
-            "random_mae": float(rand.mean()),
-            "random_ci95": [round(lo, 6), round(hi, 6)],
+            "random_mae": rand_mae,
+            "random_ci95": [lo, hi],
             "beats_random": bool(selective < lo),
-            "classifier_auc": round(float(roc_auc_score(y_te, p)), 4),
+            "classifier_auc": b["classifier_auc"],
             "control_auc": ctrl_auc,
             "control_auc_ci": [round(float(caucs[12]), 4), round(float(caucs[487]), 4)],
             "control_null": bool(caucs[487] > 0.45 and caucs[12] < 0.55),
-            "summary": (f"sealed: full {r.mae:.6f}, selective@{coverage:.0%} {selective:.6f}, "
-                        f"random {rand.mean():.6f}"),
+            "battery": b,
+            "beats_free_baselines": b["beats_free_baselines"],
+            "best_free": best_free,
+            "beats_stratified_null": strat["beats_null"],
+            "rival_summary": rivals,
+            "stratified_summary": (
+                f"within |{target}| quintiles: {strat['selective_mae']:.6f} vs "
+                f"stratified null {strat['null_mae']:.6f} CI {strat['null_ci95']}; "
+                f"Spearman(risk, {target}_CC2) = {b['spearman_risk_vs_target']:+.3f}"
+            ),
+            "summary": (f"sealed: full {b['full_mae']:.6f}, selective@{coverage:.0%} "
+                        f"{selective:.6f}, random {rand_mae:.6f}; rivals: {rivals}"),
         }
 
     def _sealed_comparison(self, claim: dict) -> dict:
@@ -542,9 +877,28 @@ class Critic:
 
     # -- family-level ------------------------------------------------------
 
-    def audit(self, claims: list[dict]) -> dict:
-        """Adjudicate a set of claims and apply Holm across the confirmatory ones."""
-        verdicts = [self.adjudicate(c) for c in claims]
+    def audit(self, claims) -> dict:
+        """Adjudicate a set of claims and apply Holm across the confirmatory ones.
+
+        TOTAL, like `adjudicate`: one bad claim in the list must not cost the other
+        seven their verdicts. `Critic().audit([good_claim, None])` used to raise
+        before the good claim was ever reported.
+        """
+        if isinstance(claims, dict) or not isinstance(claims, (list, tuple)):
+            claims = [claims]
+
+        verdicts = []
+        for c in claims:
+            try:
+                verdicts.append(self.adjudicate(c))
+            except Exception as exc:  # noqa: BLE001
+                # adjudicate is already total; this is the belt to its braces, so a
+                # future check added outside the try cannot take the audit down.
+                detail = f"{type(exc).__name__}: {exc}"
+                verdicts.append(Verdict(claim_id="?", verdict=REJECTED, kind="exploratory",
+                                        reasons=[f"referee_error: {detail}"],
+                                        checks={"referee_error": {"passed": False,
+                                                                  "detail": detail}}))
 
         family = {
             v.claim_id: v.checks["_p_value"]
@@ -600,7 +954,9 @@ if __name__ == "__main__":
     args = ap.parse_args()
 
     claims = json.loads(args.claims.read_text())
-    report = Critic().audit(claims if isinstance(claims, list) else claims["claims"])
+    if isinstance(claims, dict) and isinstance(claims.get("claims"), list):
+        claims = claims["claims"]
+    report = Critic().audit(claims)
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(report, indent=2) + "\n")

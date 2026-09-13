@@ -1,8 +1,10 @@
 {
   "claim_id": "h_misorder_signature_E1",
-  "verdict": "signed",
+  "verdict": "rejected",
   "kind": "exploratory",
-  "reasons": [],
+  "reasons": [
+    "free_baseline_dominates: cheap_gap costs nothing and scores 0.056862 against the proposed rule's 0.059528"
+  ],
   "checks": {
     "split_hash": {
       "passed": true,
@@ -26,11 +28,11 @@
     },
     "comparisons_in_family": {
       "passed": true,
-      "detail": "1 runs"
+      "detail": "27 runs"
     },
     "sealed_rerun": {
       "passed": true,
-      "detail": "sealed: full 0.072082, selective@50% 0.059528, random 0.072074"
+      "detail": "sealed: full 0.072082, selective@50% 0.059528, random 0.072074; rivals: cheap_gap 0.056862 (free), predicted_correction 0.060385 (free), residual_regressor 0.055814, oracle 0.020268"
     },
     "noise_floor": {
       "passed": true,
@@ -39,6 +41,87 @@
     "direction": {
       "passed": true,
       "detail": "claim says abstention helps at 50% coverage; it does"
+    },
+    "free_baselines": {
+      "passed": false,
+      "detail": "proposed rule 0.059528 vs best free rule cheap_gap 0.056862"
+    },
+    "magnitude_control": {
+      "passed": true,
+      "detail": "within |E1| quintiles: 0.058677 vs stratified null 0.072044 CI [0.067532, 0.076706]; Spearman(risk, E1_CC2) = +0.407"
+    },
+    "rival_risk_rules": {
+      "passed": true,
+      "detail": "cheap_gap 0.056862 (free), predicted_correction 0.060385 (free), residual_regressor 0.055814, oracle 0.020268",
+      "battery": {
+        "target": "E1",
+        "cheap_level": "PBE0-SVP",
+        "split": "random",
+        "eval_on": "sealed_test",
+        "coverage": 0.5,
+        "n_eval": 2178,
+        "n_kept": 1089,
+        "full_mae": 0.072082,
+        "risk_rules": {
+          "classifier": {
+            "selective_mae": 0.059528,
+            "free": false
+          },
+          "cheap_gap": {
+            "selective_mae": 0.056862,
+            "free": true
+          },
+          "predicted_correction": {
+            "selective_mae": 0.060385,
+            "free": true
+          },
+          "residual_regressor": {
+            "selective_mae": 0.055814,
+            "free": false
+          },
+          "oracle": {
+            "selective_mae": 0.020268,
+            "free": false
+          }
+        },
+        "random_rejection": {
+          "selective_mae": 0.072074,
+          "ci95": [
+            0.067712,
+            0.076914
+          ]
+        },
+        "best_free_baseline": {
+          "name": "cheap_gap",
+          "selective_mae": 0.056862
+        },
+        "beats_free_baselines": false,
+        "magnitude_stratified": {
+          "n_strata": 5,
+          "stratum_sizes": [
+            436,
+            435,
+            436,
+            435,
+            436
+          ],
+          "n_kept": 1090,
+          "selective_mae": 0.058677,
+          "null_mae": 0.072044,
+          "null_ci95": [
+            0.067532,
+            0.076706
+          ],
+          "beats_null": true
+        },
+        "classifier_auc": 0.6988,
+        "spearman_risk_vs_target": 0.4068,
+        "correction_refit_matches_delta_model": true,
+        "bright_retention": {
+          "applicable": false,
+          "note": "a brightness threshold is meaningless for E1; every molecule clears 0.05 eV"
+        }
+      }
     }
   }
 }

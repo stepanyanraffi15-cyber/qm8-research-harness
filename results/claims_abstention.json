@@ -1,0 +1,47 @@
+{
+  "note": "The two selective-prediction claims, in the form the referee reads them, so that every abstention verdict in results/ regenerates from a file instead of a dict someone typed. Regenerate with `python analysis/abstention_battery.py`; adjudicate alone with `python critic.py results/claims_abstention.json`. The statements are the claims AS ORIGINALLY MADE -- they are not softened to survive the extended referee, because the point of keeping them here is that the referee now rejects them.",
+  "claims": [
+    {
+      "id": "h_misorder_signature",
+      "kind": "selective",
+      "statement": "A structure-only classifier predicts which molecules the delta model will get wrong for f1, so abstaining on the riskiest half beats random rejection at the same coverage.",
+      "coverage": 0.5,
+      "scope": {
+        "target": "f1",
+        "split": "random",
+        "cheap_level": "PBE0-SVP"
+      },
+      "evidence": [
+        "e_0004"
+      ],
+      "config_b": {
+        "target": "f1",
+        "method": "delta",
+        "cheap_level": "PBE0-SVP",
+        "split": "random",
+        "seed": 0
+      }
+    },
+    {
+      "id": "h_misorder_signature_E1",
+      "kind": "selective",
+      "statement": "The same structure-only classifier predicts which molecules the delta model will get wrong for E1, so abstaining on the riskiest half beats random rejection at the same coverage.",
+      "coverage": 0.5,
+      "scope": {
+        "target": "E1",
+        "split": "random",
+        "cheap_level": "PBE0-SVP"
+      },
+      "evidence": [
+        "e_0000"
+      ],
+      "config_b": {
+        "target": "E1",
+        "method": "delta",
+        "cheap_level": "PBE0-SVP",
+        "split": "random",
+        "seed": 0
+      }
+    }
+  ]
+}

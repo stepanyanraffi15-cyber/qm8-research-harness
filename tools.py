@@ -42,6 +42,7 @@ from __future__ import annotations
 
 import json
 import time
+import uuid
 from pathlib import Path
 
 import numpy as np
@@ -54,7 +55,14 @@ LOG_PATH = ROOT / "results" / "experiment_log.jsonl"
 
 DEFAULT_BUDGET = 30
 
-SLICE_BY = ["state_gap", "heavy_atoms", "brightness", "train_distance", "cheap_error"]
+
+def new_run_prefix() -> str:
+    """Six hex characters, one per rollout. Not a hash of anything -- just enough
+    entropy that two rollouts appended to the same log never share an id."""
+    return uuid.uuid4().hex[:6]
+
+
+SLICE_BY =["state_gap", "heavy_atoms", "brightness", "train_distance", "cheap_error"]
 CONTROLS = ["shuffle_labels", "apply_to_energies", "random_reindex"]
 INTERVENTIONS = ["reindex_states", "ablate_features", "subsample_train"]
 
@@ -67,11 +75,14 @@ class Session:
     cannot see its own budget cannot manage it.
     """
 
-    def __init__(self, budget: int = DEFAULT_BUDGET, log_path: Path = LOG_PATH, seed: int = 0):
+    def __init__(self, budget: int = DEFAULT_BUDGET, log_path: Path = LOG_PATH, seed: int = 0,
+                 run_prefix: str | None = None):
         self.budget = budget
         self.calls_used = 0
         self.log_path = log_path
         self.seed = seed
+        # One prefix per Session, i.e. per rollout. See _next_id.
+        self.run_prefix = run_prefix or new_run_prefix()
         self.entries: list[dict] = []
         self.best: dict[str, tuple[float, np.ndarray, str]] = {}  # family -> (mae, errors, eid)
         self._noise: dict[str, float] = {}
@@ -81,7 +92,17 @@ class Session:
     # -- logging ----------------------------------------------------------
 
     def _next_id(self) -> str:
-        return f"e_{len(self.entries):04d}"
+        """`e_<run>_<n>` -- run-scoped, not session-local.
+
+        This used to be `e_{n:04d}`, which restarts at e_0000 on every rollout.
+        Every rollout appends to the SAME log, so results/experiment_log.jsonl
+        holds `e_0000` twelve times over, and `e_0001` twelve times. critic.py
+        resolves a claim's `evidence` ids against that log by set membership, so
+        a claim from rollout eight can be adjudicated against rollout one's
+        experiment -- silently, and against a config the claim never ran. The id
+        has to identify the run as well as the step.
+        """
+        return f"e_{self.run_prefix}_{len(self.entries):04d}"
 
     def _log(self, entry: dict) -> None:
         self.entries.append(entry)
@@ -121,9 +142,10 @@ def session() -> Session:
     return _SESSION
 
 
-def reset_session(budget: int = DEFAULT_BUDGET, log_path: Path = LOG_PATH, seed: int = 0) -> Session:
+def reset_session(budget: int = DEFAULT_BUDGET, log_path: Path = LOG_PATH, seed: int = 0,
+                  run_prefix: str | None = None) -> Session:
     global _SESSION
-    _SESSION = Session(budget=budget, log_path=log_path, seed=seed)
+    _SESSION = Session(budget=budget, log_path=log_path, seed=seed, run_prefix=run_prefix)
     return _SESSION
 
 
@@ -211,7 +233,10 @@ def describe_dataset() -> str:
             "f1_cc2_distribution": p["f1_cc2"],
             "methods": {
                 "cheap": "report the TDDFT number, no learning",
-                "direct": "predict CC2 from structure",
+                "direct": "predict CC2 from structure only",
+                "direct_aug": ("predict CC2 from structure PLUS the four cheap TDDFT "
+                               "numbers as features -- the same information delta gets, "
+                               "so this is the fair comparison against delta"),
                 "delta": "predict CC2 - TDDFT, add it back",
                 "zero": "predict 0.0 (a real baseline for oscillator strengths)",
             },
@@ -241,8 +266,13 @@ def run_experiment(
     eid = s._next_id()
     family = f"{target}:{split}"
 
+    # direct_aug is reported alongside the others because leaving it out is what
+    # made the published cheap-vs-direct-vs-delta table unfair: `direct` was the
+    # only method denied the TDDFT numbers. An agent that never sees the fair
+    # baseline cannot be expected to claim against it.
     baselines = {}
-    for m in ("cheap", "direct", "zero" if target.startswith("f") else "delta"):
+    for m in ("cheap", "direct", "direct_aug",
+              "zero" if target.startswith("f") else "delta"):
         if m == method:
             continue
         baselines[m] = round(
@@ -540,7 +570,11 @@ TOOL_SCHEMAS = [
                     "description": "E1/E2 are excitation energies (eV); f1/f2 oscillator strengths (a.u.)."},
          "method": {"type": "string", "enum": models.METHODS,
                     "description": "cheap = report TDDFT, no learning. direct = predict CC2 from "
-                                   "structure. delta = predict CC2-TDDFT and add it back. zero = predict 0."},
+                                   "structure alone. direct_aug = predict CC2 from structure plus "
+                                   "the four cheap TDDFT numbers as features -- the same "
+                                   "information delta has, so direct_aug vs delta is the fair "
+                                   "test of the delta construction and direct vs delta is not. "
+                                   "delta = predict CC2-TDDFT and add it back. zero = predict 0."},
          "cheap_level": {"type": "string", "enum": models.CHEAP_LEVELS,
                          "description": "Which TDDFT approximation to use as the cheap baseline."},
          "split": {"type": "string", "enum": models.SPLITS,
@@ -561,8 +595,10 @@ TOOL_SCHEMAS = [
         ["experiment_id", "by"]),
     _fn("run_control",
         "Re-run an experiment under a condition where the effect MUST be absent. A result "
-        "without a control cannot be distinguished from an artifact, and the referee will "
-        "reject a mechanistic claim that has no control behind it.",
+        "without a control cannot be distinguished from an artifact. The referee cannot "
+        "re-run an intervention on the sealed set, so it will not sign a claim that rests "
+        "on one -- use a control to decide for YOURSELF whether what you are about to claim "
+        "is real, then claim the comparison the referee can check.",
         {"experiment_id": {"type": "string"},
          "control": {"type": "string", "enum": CONTROLS,
                      "description": "shuffle_labels = permute the targets; any skill left is "
@@ -585,16 +621,31 @@ TOOL_SCHEMAS = [
         "Submit one finding to the referee and END the run. The referee re-scores it on a "
         "sealed test set you have never seen, checks it against a paired bootstrap and a "
         "multiplicity correction, and verifies that your statement does not quantify over "
-        "configurations you never ran. Claim narrowly and cite every experiment.",
+        "configurations you never ran. The only claim the referee can falsify is a "
+        "comparison of two named configurations, so that is the only kind it will sign: "
+        "a claim it cannot re-measure on the sealed set is rejected as unverifiable rather "
+        "than waved through. Citing an extra supporting experiment never counts against "
+        "you; claiming more than you measured does.",
         {"statement": {"type": "string", "description": "The finding, in one sentence."},
-         "kind": {"type": "string", "enum": ["comparison", "mechanism", "value"],
-                  "description": "comparison needs config_a and config_b; mechanism needs a control."},
-         "scope": {"type": "object", "description": "e.g. {'target':'E1','split':'random'}. "
-                                                    "Omit an axis you are not claiming about."},
+         "kind": {"type": "string", "enum": ["comparison"],
+                  "description": "comparison needs config_a and config_b, and is the only kind "
+                                 "the referee can re-measure on the sealed set."},
+         "scope": {"type": "object",
+                   "description": "e.g. {'target':'E1','split':'random'}. Omit an axis you are "
+                                  "not claiming about: an omitted axis is read off your cited "
+                                  "experiments instead (so omitting `split` is fine as long as "
+                                  "the experiments you cite all used the same one), and the "
+                                  "verdict reports the values actually run. Use 'all' only if "
+                                  "you really ran every value of that axis."},
          "evidence": {"type": "array", "items": {"type": "string"},
-                      "description": "Experiment ids supporting the claim."},
+                      "description": "Experiment ids supporting the claim. More is never worse: "
+                                     "the referee checks that your scope is COVERED by these "
+                                     "runs, not that it exactly equals them."},
          "config_a": {"type": "object", "description": "Baseline config (the one you say is worse)."},
          "config_b": {"type": "object", "description": "The config you say is better."},
-         "control": {"type": "string", "description": "Control experiment id, for a mechanism claim."}},
+         "control": {"type": "string",
+                     "description": "Optional control experiment id, cited as supporting "
+                                    "evidence. A control strengthens the argument; it is not "
+                                    "itself a claim kind the referee can score."}},
         ["statement", "kind", "evidence"]),
 ]

@@ -48,8 +48,13 @@ How to work:
   show it is WRONG. An experiment that can only confirm you is not evidence.
 - A difference is only real if the paired bootstrap in `vs_best` excludes zero. Seed
   variance is 0 here because the fit is deterministic -- do not read it as a noise floor.
-- If you claim a mechanism, run a control. A result you cannot distinguish from an
-  artifact is not a result, and the referee will reject it.
+- Run a control before you believe a mechanism. A result you cannot distinguish from an
+  artifact is not a result. But note what the referee can and cannot do: it cannot
+  reproduce an intervention on the sealed set, so it will not sign a claim that rests on
+  one. Use controls to decide what to believe, then claim the comparison it can re-measure.
+- When you compare a learned method against `cheap`, compare `direct_aug` rather than
+  `direct`: `cheap` and `delta` both get the TDDFT numbers, and `direct` alone does not, so
+  direct-vs-delta measures input access rather than the delta construction.
 - `slice_error` tells you WHERE a method fails. That is usually more informative than
   another point estimate of how much it fails on average.
 
@@ -112,17 +117,21 @@ def _extract_id(observation: str) -> str | None:
 class Agent:
     def __init__(self, llm: LLM | None = None, max_steps: int = 20,
                  budget: int = 30, system_prompt: str = SYSTEM_PROMPT,
-                 log_path: Path | None = None) -> None:
+                 log_path: Path | None = None, run_prefix: str | None = None) -> None:
         self.llm = llm or LLM()
         self.max_steps = max_steps
         self.budget = budget
         self.system_prompt = system_prompt
         self.log_path = log_path
+        # Caller-supplied so the evaluator can name the trace file after the same
+        # run the experiment ids carry. Left None, the Session mints its own.
+        self.run_prefix = run_prefix
 
     def run(self, question: str) -> Result:
         session = tools.reset_session(
             budget=self.budget,
             log_path=self.log_path or tools.LOG_PATH,
+            run_prefix=self.run_prefix,
         )
         messages: list[dict] = [
             {"role": "system", "content": self.system_prompt},
@@ -150,9 +159,28 @@ class Agent:
                     args = {}
 
                 if name == "claim":
-                    observation = tools.claim(**args) if _claimable(args) else (
-                        "ERROR: claim needs at least `statement`, `kind` and `evidence`."
-                    )
+                    # `claim` is intercepted before dispatch so it can double as
+                    # the stopping rule -- which meant it skipped the try/except
+                    # every other tool gets, and a single bad kwarg killed the
+                    # whole rollout. Found by a real run: the model emitted
+                    # claim(budget=...) and the sweep died at seed 2 with a
+                    # TypeError. The terminal tool is the LAST one that should be
+                    # able to crash a run, so it gets the same guard.
+                    if not _claimable(args):
+                        observation = (
+                            "ERROR: claim needs at least `statement`, `kind` and `evidence`."
+                        )
+                    else:
+                        try:
+                            observation = tools.claim(**args)
+                        except TypeError as exc:
+                            observation = (
+                                f"ERROR: bad arguments for claim: {exc}. "
+                                f"Accepted: statement, kind, scope, evidence, "
+                                f"config_a, config_b, control, coverage."
+                            )
+                        except Exception as exc:  # noqa: BLE001
+                            observation = f"ERROR: claim failed: {exc}"
                     if session.claim is not None:
                         result.claim = session.claim
                         result.steps.append(
@@ -203,6 +231,10 @@ def main() -> int:
     ap.add_argument("--budget", type=int, default=30)
     ap.add_argument("--temperature", type=float, default=0.0)
     ap.add_argument("--out", type=Path, default=None, help="write the trajectory here")
+    ap.add_argument("--log", type=Path, default=None,
+                    help="append the experiment log here instead of the shared results/ log. "
+                         "selftest uses this so a verification run never writes into a file "
+                         "that ships as a deliverable trace.")
     args = ap.parse_args()
 
     question = " ".join(args.question) or (
@@ -211,7 +243,7 @@ def main() -> int:
     )
 
     agent = Agent(llm=LLM(temperature=args.temperature),
-                  max_steps=args.max_steps, budget=args.budget)
+                  max_steps=args.max_steps, budget=args.budget, log_path=args.log)
     res = agent.run(question)
 
     for s in res.steps:

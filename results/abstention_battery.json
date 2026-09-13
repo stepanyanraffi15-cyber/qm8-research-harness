@@ -1,0 +1,218 @@
+{
+  "claims_file": "results/claims_abstention.json",
+  "targets": {
+    "f1": {
+      "target": "f1",
+      "cheap_level": "PBE0-SVP",
+      "split": "random",
+      "eval_on": "sealed_test",
+      "coverage": 0.5,
+      "n_eval": 2178,
+      "n_kept": 1089,
+      "full_mae": 0.013946,
+      "risk_rules": {
+        "classifier": {
+          "selective_mae": 0.01108,
+          "free": false
+        },
+        "cheap_gap": {
+          "selective_mae": 0.008034,
+          "free": true
+        },
+        "predicted_correction": {
+          "selective_mae": 0.004321,
+          "free": true
+        },
+        "residual_regressor": {
+          "selective_mae": 0.004892,
+          "free": false
+        },
+        "oracle": {
+          "selective_mae": 0.001894,
+          "free": false
+        }
+      },
+      "random_rejection": {
+        "selective_mae": 0.013954,
+        "ci95": [
+          0.012426,
+          0.015482
+        ]
+      },
+      "best_free_baseline": {
+        "name": "predicted_correction",
+        "selective_mae": 0.004321
+      },
+      "beats_free_baselines": false,
+      "magnitude_stratified": {
+        "n_strata": 5,
+        "stratum_sizes": [
+          436,
+          435,
+          436,
+          435,
+          436
+        ],
+        "n_kept": 1090,
+        "selective_mae": 0.012587,
+        "null_mae": 0.013938,
+        "null_ci95": [
+          0.01246,
+          0.015424
+        ],
+        "beats_null": false
+      },
+      "classifier_auc": 0.6988,
+      "spearman_risk_vs_target": 0.3828,
+      "correction_refit_matches_delta_model": true,
+      "bright_retention": {
+        "applicable": true,
+        "threshold": 0.05,
+        "total_bright": 266,
+        "kept_by_rule": 89,
+        "kept_by_random_mean": 132.9,
+        "kept_by_random_ci95": [
+          117,
+          148
+        ],
+        "retention_rule": 0.3346,
+        "retention_random": 0.4995
+      }
+    },
+    "E1": {
+      "target": "E1",
+      "cheap_level": "PBE0-SVP",
+      "split": "random",
+      "eval_on": "sealed_test",
+      "coverage": 0.5,
+      "n_eval": 2178,
+      "n_kept": 1089,
+      "full_mae": 0.072082,
+      "risk_rules": {
+        "classifier": {
+          "selective_mae": 0.059528,
+          "free": false
+        },
+        "cheap_gap": {
+          "selective_mae": 0.056862,
+          "free": true
+        },
+        "predicted_correction": {
+          "selective_mae": 0.060385,
+          "free": true
+        },
+        "residual_regressor": {
+          "selective_mae": 0.055814,
+          "free": false
+        },
+        "oracle": {
+          "selective_mae": 0.020268,
+          "free": false
+        }
+      },
+      "random_rejection": {
+        "selective_mae": 0.072074,
+        "ci95": [
+          0.067712,
+          0.076914
+        ]
+      },
+      "best_free_baseline": {
+        "name": "cheap_gap",
+        "selective_mae": 0.056862
+      },
+      "beats_free_baselines": false,
+      "magnitude_stratified": {
+        "n_strata": 5,
+        "stratum_sizes": [
+          436,
+          435,
+          436,
+          435,
+          436
+        ],
+        "n_kept": 1090,
+        "selective_mae": 0.058677,
+        "null_mae": 0.072044,
+        "null_ci95": [
+          0.067532,
+          0.076706
+        ],
+        "beats_null": true
+      },
+      "classifier_auc": 0.6988,
+      "spearman_risk_vs_target": 0.4068,
+      "correction_refit_matches_delta_model": true,
+      "bright_retention": {
+        "applicable": false,
+        "note": "a brightness threshold is meaningless for E1; every molecule clears 0.05 eV"
+      }
+    }
+  },
+  "verdicts": {
+    "h_misorder_signature": {
+      "target": "f1",
+      "verdict": "rejected",
+      "kind": "confirmatory",
+      "reasons": [
+        "magnitude_artifact: with |f1| held fixed within quintiles the rule scores 0.012587 against a stratified null of [0.01246, 0.015424] -- it is ranking magnitude (Spearman +0.383), not error",
+        "free_baseline_dominates: predicted_correction costs nothing and scores 0.004321 against the proposed rule's 0.011080"
+      ],
+      "verdict_file": "results/audit_abstention.json"
+    },
+    "h_misorder_signature_E1": {
+      "target": "E1",
+      "verdict": "rejected",
+      "kind": "exploratory",
+      "reasons": [
+        "free_baseline_dominates: cheap_gap costs nothing and scores 0.056862 against the proposed rule's 0.059528"
+      ],
+      "verdict_file": "results/audit_abstention_E1.json"
+    }
+  },
+  "classifier_vs_free_gap": {
+    "f1": {
+      "validation": {
+        "n_eval": 2179,
+        "full_mae": 0.012442,
+        "classifier": 0.008556,
+        "cheap_gap": 0.007098,
+        "classifier_wins": false
+      },
+      "sealed_test": {
+        "n_eval": 2178,
+        "full_mae": 0.013946,
+        "classifier": 0.01108,
+        "cheap_gap": 0.008034,
+        "classifier_wins": false
+      },
+      "ordering_reverses_val_to_sealed": false
+    },
+    "E1": {
+      "validation": {
+        "n_eval": 2179,
+        "full_mae": 0.067594,
+        "classifier": 0.05182,
+        "cheap_gap": 0.057493,
+        "classifier_wins": true
+      },
+      "sealed_test": {
+        "n_eval": 2178,
+        "full_mae": 0.072082,
+        "classifier": 0.059528,
+        "cheap_gap": 0.056862,
+        "classifier_wins": false
+      },
+      "ordering_reverses_val_to_sealed": true
+    }
+  },
+  "summary": {
+    "signed": 0,
+    "narrowed": 0,
+    "rejected": 2,
+    "failure_histogram": {
+      "magnitude_artifact": 1,
+      "free_baseline_dominates": 2
+    }
+  }
+}
