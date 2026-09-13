@@ -114,7 +114,7 @@ run_control · intervene · claim"]
     VA["validation · 2,179"] --> P
   end
   P -- "claim + evidence ids" --> C["CRITIC (deterministic)
-9 checks · 3 verdicts"]
+11 checks · 3 verdicts"]
   ST["SEALED TEST · 2,178"] -- "scored once per claim" --> C
   C -- "signed / narrowed / rejected" --> W["WRITER
 cites signed claims only"]
@@ -122,10 +122,11 @@ cites signed claims only"]
 
 The proposer's loop closes on **validation**; it never observes a sealed-test number. Enforcement is mechanical — `models.run(eval_on="sealed_test")` raises without an audit token that nothing importable from `tools.py` holds.
 
-Nine checks. The ones added *because of* this audit are marked:
+Eleven checks (0–10). The ones added *because of* this audit are marked:
 
 | check | catches |
 |---|---|
+| well-formedness | a submission that is not a claim at all |
 | split hash · evidence resolves · sealed re-run | fabrication, leakage, precision mismatch |
 | noise floor — paired bootstrap over molecules | noise reported as signal |
 | direction | a claim that is exactly backwards |
@@ -134,8 +135,9 @@ Nine checks. The ones added *because of* this audit are marked:
 | control | an artifact presented as a mechanism |
 | **free baselines** ← *new* | **features that bought nothing** |
 | **magnitude control** ← *new* | **a rule that never ranked error** |
+| **verifiable kind** ← *new* | **a claim of a kind the referee cannot measure on sealed data** |
 
-The last two retracted the flagship. They exist because the audit showed that "beats random rejection" is a bar almost anything clears.
+The **free baselines** and **magnitude control** checks retracted the flagship. They exist because the audit showed that "beats random rejection" is a bar almost anything clears.
 
 ### On the agent
 
@@ -162,7 +164,7 @@ python world/build.py --seed 0     # rebuild the environment from a seed
 python selftest.py                 # 18 checks
 ```
 
-`selftest` **re-derives** the headline numbers rather than reading them from a results file. One check now asserts the **retraction** — it fails if the classifier ever beats every free baseline again. The old version certified the claim, on validation; the guard shared the claim's blind spot.
+`selftest` **re-derives** most of the headline numbers rather than reading them from a results file: 14 of the 18 checks recompute their number from the data, and 4 — `t_no_leak`, `t_shuffle_control`, `t_referee_narrows` and `t_abstention_retracted` — read a JSON under `results/`, because re-running those batteries costs minutes rather than seconds. One check now asserts the **retraction** — it fails if the classifier ever beats every free baseline again. The old version certified the claim, on validation; the guard shared the claim's blind spot.
 
 ```sh
 QM8_PROFILE=mock python agent.py   # a full rollout, no GPU, no network
@@ -177,11 +179,11 @@ world/build.py        the environment — resets byte-for-byte from a seed
                       train 17,429 / validation 2,179 / SEALED 2,178, SHA-256 each
 models.py             cheap / direct / direct_aug / delta / zero
 tools.py agent.py     the action space and the loop
-critic.py             the referee — 9 checks, 3 verdicts, deterministic
+critic.py             the referee — 11 checks, 3 verdicts, deterministic
 evaluate.py           three arms, bootstrap CIs, hash-bound traces, resume
 analysis/             state ordering · label budget · abstention battery ·
                       screening metrics · method comparison · figures
-selftest.py           18 checks, re-derives every headline number
+selftest.py           18 checks; 14 re-derive their number, 4 read results/
 writeup/RESULTS.md    the full write-up
 docs/AUDIT_RESPONSE.md what the audit found and what was done about it
 HUMAN.md              what was done by hand, written live
