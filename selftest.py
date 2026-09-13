@@ -429,14 +429,22 @@ def t_abstention_retracted():
 
 @check("the loop runs with no GPU and no network")
 def t_offline_loop():
+    """Runs a real rollout, so it must not write into a shipped trace.
+
+    agent.py defaults to results/experiment_log.jsonl, which this repository
+    ships as a deliverable. Every selftest run was appending two rows to it --
+    a verification step quietly editing the evidence it verifies.
+    """
     import os
 
     env = {**os.environ, "QM8_PROFILE": "mock"}
-    r = subprocess.run([sys.executable, str(ROOT / "agent.py")],
-                       capture_output=True, text=True, cwd=ROOT, env=env)
-    ok = r.returncode == 0 and "stopped : claim" in r.stdout
-    line = next((l for l in r.stdout.splitlines() if l.startswith("tokens")), "")
-    return ok, f"mock rollout completed, {line.strip()}"
+    with tempfile.TemporaryDirectory() as tmp:
+        r = subprocess.run(
+            [sys.executable, str(ROOT / "agent.py"), "--log", str(Path(tmp) / "log.jsonl")],
+            capture_output=True, text=True, cwd=ROOT, env=env)
+        ok = r.returncode == 0 and "stopped : claim" in r.stdout
+        line = next((l for l in r.stdout.splitlines() if l.startswith("tokens")), "")
+    return ok, f"mock rollout completed, {line.strip()} (log written to a temp dir)"
 
 
 def main() -> int:

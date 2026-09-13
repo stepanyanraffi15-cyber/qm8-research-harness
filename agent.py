@@ -231,6 +231,10 @@ def main() -> int:
     ap.add_argument("--budget", type=int, default=30)
     ap.add_argument("--temperature", type=float, default=0.0)
     ap.add_argument("--out", type=Path, default=None, help="write the trajectory here")
+    ap.add_argument("--log", type=Path, default=None,
+                    help="append the experiment log here instead of the shared results/ log. "
+                         "selftest uses this so a verification run never writes into a file "
+                         "that ships as a deliverable trace.")
     args = ap.parse_args()
 
     question = " ".join(args.question) or (
@@ -239,7 +243,7 @@ def main() -> int:
     )
 
     agent = Agent(llm=LLM(temperature=args.temperature),
-                  max_steps=args.max_steps, budget=args.budget)
+                  max_steps=args.max_steps, budget=args.budget, log_path=args.log)
     res = agent.run(question)
 
     for s in res.steps:
