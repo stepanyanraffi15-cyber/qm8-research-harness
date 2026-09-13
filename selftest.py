@@ -360,18 +360,39 @@ def t_state_ordering():
     )
 
 
-@check("delta-learning on 100 labels beats direct on the full training set")
+@check("the label-efficiency claim stays qualified")
 def t_label_efficiency():
+    """This check used to print "174x fewer expensive labels" and assert
+    delta@100 < direct@full. Both halves were the framing the write-up retracts.
+
+    The factor is left-censored: the sweep's first point is 100 and the reported
+    figure is literally 17429/100, so the true crossing lies below the grid. And
+    `direct` is denied the cheap TDDFT columns that `cheap` and `delta` both get,
+    so beating it measures input access rather than the delta construction.
+
+    What this now asserts is what survives: delta@100 beats plain direct@full
+    (true, and left-censored), AND direct_aug closes most of that gap, so the
+    honest reading is the constant offset rather than label efficiency. It fails
+    if direct_aug ever stops closing it -- which would mean the original framing
+    was right after all.
+    """
     import models
 
     d100 = models.run(target="E1", method="delta", cheap_level="PBE0-TZVP",
                       split="random", n_train=100, seed=0, speed="fast").mae
     full = models.run(target="E1", method="direct", cheap_level="PBE0-TZVP",
                       split="random", speed="fast")
-    factor = full.n_train / 100
-    return d100 < full.mae, (
-        f"delta@100 {d100:.5f} vs direct@{full.n_train} {full.mae:.5f} "
-        f"-> {factor:.0f}x fewer expensive labels"
+    aug = models.run(target="E1", method="direct_aug", cheap_level="PBE0-TZVP",
+                     split="random", speed="fast").mae
+    delta_full = models.run(target="E1", method="delta", cheap_level="PBE0-TZVP",
+                            split="random", speed="fast").mae
+
+    censored = d100 < full.mae                      # true, and the grid's first point
+    gap_closes = abs(aug - delta_full) < 0.5 * abs(full.mae - delta_full)
+    return censored and gap_closes, (
+        f"delta@100 {d100:.5f} < direct@{full.n_train} {full.mae:.5f} "
+        f"(left-censored: {full.n_train}/100 = {full.n_train/100:.0f}x is the grid edge); "
+        f"direct_aug {aug:.5f} vs delta {delta_full:.5f} -- most of the gap is input access"
     )
 
 

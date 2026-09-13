@@ -221,10 +221,23 @@ own planning documents:
   named failure modes include *impatience, poor time and resource management, overconfidence
   in weak hypotheses* — which is what we attribute the agent's 4-of-12 early stopping to.
 
-**One flagged discrepancy is now resolved, against us.** The rev-1 planning document claimed
-HAL's abstract overstated its own body, and that the real finding was "in 21 of 36 runs
-higher reasoning effort did not improve accuracy." The abstract says *the majority of runs*,
-and the deck quoted it correctly. The earlier document's correction was itself the error.
+**One flagged discrepancy is NOT resolved, and saying it was is its own instance of this
+project's failure mode.** The rev-1 planning document claimed HAL's abstract overstated its
+own body — that the real finding was "in 21 of 36 runs higher reasoning effort did not
+improve accuracy." This log previously concluded the earlier document's correction "was
+itself the error."
+
+That conclusion outran its evidence. What was checked is HAL's **abstract**, which says
+higher reasoning effort reduced accuracy *in the majority of runs*. The claim being retracted
+was about a **body table**. Those are different sentences and both can be accurate; an
+abstract summarising 21,730 rollouts and a table reporting 36 configurations are not in
+contradiction merely because their phrasings differ.
+
+So the honest status: the abstract's wording is verified, the body table is not, and the
+retraction is **withdrawn pending someone opening the PDF and quoting both verbatim**.
+Asserting a retraction on evidence that does not cover the claim being retracted is the same
+error as asserting a finding on a slice that does not cover the population — which is the
+error this entire log is about, pointed the other way. Caught by a reviewer, not by us.
 
 Precision fix that came out of this: `llm.py` had HAL's finding as
 "model × scaffold × harness × budget", which is a paraphrase rather than the paper's own

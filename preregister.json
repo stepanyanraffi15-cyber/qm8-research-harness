@@ -74,13 +74,14 @@
       "agent_seed6",
       "agent_seed7"
     ],
-    "outcome": "1 signed, 2 narrowed, 5 rejected",
+    "outcome": "2 signed, 1 narrowed, 5 rejected",
     "failure_histogram": {
       "overscoped": 3,
       "unsupported_claim": 3,
       "wrong_direction": 2
     },
-    "superseded": "An earlier 3-seed audit reported 2 signed and 1 rejected. That was luck; 8 seeds give 1 in 8. Recorded because the optimistic number was published first."
+    "superseded": "Two earlier figures are NOT reproducible and are recorded only so the drift is visible: a 3-seed audit reported 2 signed / 1 rejected, and an 8-seed audit reported 1 signed / 2 narrowed / 5 rejected. The trace files behind both are gone. The current line is from clean hash-bound traces; two verdicts moved because of referee bugs (split inference, and set-equality scoping that penalised extra evidence), not agent merit.",
+    "measured_on": "results/arms_agent8_clean.json, hash-verified traces, corrected referee"
   },
   "registered_at_addendum": "2026-09-08T16:20:00Z (h_frontier_explores added)"
 }

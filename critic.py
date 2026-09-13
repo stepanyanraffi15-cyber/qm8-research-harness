@@ -8,7 +8,7 @@ ChemCrow found GPT-4 could not separate confidently-wrong chemistry from correct
 chemistry, and trajectory judges show *argument blindness* -- failing to notice a
 wrong value passed to a tool (BabelJudge). A held-out number is not persuadable.
 
-Ten checks, in order. The first three catch fabrication and leakage; those
+Eleven checks, in order (0-10). The first three catch fabrication and leakage; those
 existed in the earlier design. The rest catch the failures that actually occur in
 ML research, and did not:
 
@@ -481,6 +481,17 @@ class Critic:
         return True, "both configs present"
 
     def _check_control(self, claim: dict) -> tuple[bool, str]:
+        """Mechanistic claims need a control experiment.
+
+        Note on reachability: `verifiable_kind` already rejects kind="mechanism"
+        because the referee cannot reproduce an intervention on the sealed set, so
+        this check can no longer be the DECIDING reason for such a claim -- both
+        reasons fire together and the verdict is rejected either way. It is kept,
+        not deleted, because it is the check that must come back if `intervene`
+        ever becomes sealed-reproducible, and because the two reasons are
+        different diagnoses: "unverifiable by construction" versus "verifiable but
+        uncontrolled". Removing it would lose that distinction from the histogram.
+        """
         if claim.get("kind") != "mechanism":
             return True, "not a mechanistic claim"
         ctrl = claim.get("control")
@@ -522,11 +533,20 @@ class Critic:
         observed = self._observed_scope(claim)
         target, split = observed.get("target"), observed.get("split")
         if isinstance(target, list) or isinstance(split, list) or target is None:
-            # heterogeneous family: count everything sharing the split
-            return sum(1 for e in self.log
-                       if _as_dict(e.get("config")).get("split")
-                       == (split if isinstance(split, str) else None)
-                       or split is None)
+            # Heterogeneous family (scope spans several splits or targets, or
+            # names none): count every logged run whose split is among those the
+            # claim actually covers. The previous expression compared each row's
+            # split against None and OR-ed with `split is None`, so for a list
+            # scope BOTH sides were false for every row and the family size came
+            # out 0 -- which silently disabled the Holm correction for exactly the
+            # multi-split claims that need it most.
+            covered = (set(split) if isinstance(split, list)
+                       else {split} if isinstance(split, str) else None)
+            return sum(
+                1 for e in self.log
+                if covered is None
+                or _as_dict(e.get("config")).get("split") in covered
+            )
         return sum(
             1
             for e in self.log
