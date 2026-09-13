@@ -6,6 +6,16 @@
 
 ---
 
+## What the brief asked for, and what this is
+
+The brief: *build a team of AI agents and let them do research on QM8.* What ships is **one** LLM agent that proposes and runs experiments, a referee that is deliberately **a script, not an agent**, and a rule that only claims the referee signs reach the write-up. Three roles rather than a seven-agent team, because most multi-agent failures are failures of coordination and verification between the agents ([Cemri et al.](https://arxiv.org/abs/2503.13657)), and because an LLM judge could not separate confidently-wrong chemistry from correct ([ChemCrow](https://arxiv.org/abs/2304.05376)).
+
+**The agent result, stated plainly.** Eight seeds of a local Qwen3 8B, twelve experiments each. It lost to a pre-written twelve-line schedule on all three targets that schedule covers, and to uniform random sampling on three of four. Five of eight seeds never tried Δ-learning, the one axis that matters. Of eight rollouts, the referee signed two. That result is confounded with model size, and the pre-registered test that would separate capacity from harness — `h_frontier_explores` — has **not been run**.
+
+**Why the referee became the result.** The checks that caught the agent's backwards claims also overturned four of this project's own headline claims — two retracted outright, including the pre-registered flagship, and two cut down to the slice that survives — once an external audit showed where to aim them. The rest of this page is that record.
+
+---
+
 ## Start here: every headline claim this project published failed the same way
 
 Not four different mistakes. **One mistake, four times** — report the slice where the effect appears, omit the slices where it does not.
@@ -136,7 +146,7 @@ Eight seeds, budget 12, local Qwen3 8B, hash-bound traces:
 verdicts: 2 signed · 1 narrowed · 5 rejected  (3 of them wrong_direction)
 ```
 
-The agent loses to a pre-written 12-line schedule on every target. Two of its claims pointed the wrong way — caught only by the `direction` check, which exists because an earlier rollout produced exactly that and an earlier referee **signed it**.
+The agent loses to a pre-written 12-line schedule on all three targets that schedule covers (it never runs f2), and to uniform random sampling on three of four. Two of its claims pointed the wrong way — caught only by the `direction` check, which exists because an earlier rollout produced exactly that and an earlier referee **signed it**.
 
 Honest caveat: the previously published `1 signed / 2 narrowed / 5 rejected` **cannot be re-derived** — its trace files are gone. The line above is from clean, hash-verified traces under the corrected referee. Two verdicts moved because of referee bugs rather than agent merit: the prompt told the agent to omit axes it wasn't claiming about and the referee then rejected it for omitting them; and citing *extra* supporting evidence made a claim score *worse*.
 

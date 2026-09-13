@@ -340,6 +340,19 @@ because the audit showed "beats random rejection" is a bar almost anything clear
 claim's blind spot. It now asserts the retraction and fails if the classifier ever beats
 every free baseline again.
 
+**Instance seven, and it is in a commit message about a bug fix.** Commit 4f61581 claimed
+that a bug in `_count_comparisons` "silently disabled the Holm correction for exactly the
+multi-split claims that need it". That is wrong. `holm()` is fed from `v.checks["_p_value"]`
+over confirmatory verdicts in `audit()`; `_count_comparisons` only fills the
+`comparisons_in_family` field displayed beside each verdict. The bug hid a number a reader
+sees. It never touched the correction.
+
+The fix was right, the diagnosis overstated. Caught by a collaborator reading the code rather
+than the message — which is the only way it could have been caught, since a commit message is
+not testable. It is recorded here because the commit itself cannot be edited, and because a
+project making this argument does not get to leave a false claim in its own history
+uncorrected.
+
 **One more instance, caught while writing this.** The README asserted that this log contained
 every retraction. It did not — it stopped before the audit entirely. Found by grepping my own
 document for a word that should have been in it. That is the fifth occurrence of the same

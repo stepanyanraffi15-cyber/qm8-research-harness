@@ -19,7 +19,8 @@ ML research, and did not:
   3 sealed re-run     re-scored at full precision on the sealed test set
   4 noise floor       the effect exceeds a paired bootstrap CI over molecules
   5 direction         the effect runs the way the claim says it does
-  6 multiplicity      Holm correction over the configs actually compared
+  6 multiplicity      Holm over the confirmatory family (audit()); the runs tried
+                      in a claim's family are counted and reported beside it
   7 scope             the evidence COVERS everything the claim quantifies over
   8 control           a mechanistic claim has a control experiment
   9 rival baselines   a selective rule beats free rules and a stratified null
@@ -537,9 +538,12 @@ class Critic:
             # names none): count every logged run whose split is among those the
             # claim actually covers. The previous expression compared each row's
             # split against None and OR-ed with `split is None`, so for a list
-            # scope BOTH sides were false for every row and the family size came
-            # out 0 -- which silently disabled the Holm correction for exactly the
-            # multi-split claims that need it most.
+            # scope BOTH sides were false for every row and the count came out 0.
+            # That count is REPORTED, not enforced: it is the
+            # `comparisons_in_family` detail beside each verdict, so the bug hid
+            # the best-of-N context from a reader of exactly the multi-split
+            # claims that most need it. It never reached Holm, which `audit()`
+            # runs over the confirmatory claims' p-values independently of this.
             covered = (set(split) if isinstance(split, list)
                        else {split} if isinstance(split, str) else None)
             return sum(
