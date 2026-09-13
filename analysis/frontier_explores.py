@@ -1,6 +1,11 @@
 """Score `h_frontier_explores` exactly as preregister.json states it.
 
 Written, and run against the Qwen arm, BEFORE any frontier-model rollout existed.
+
+"This same harness" means commit c51235e, the code the Qwen traces were produced
+on. 1a6e00f later added `direct_aug` to the agent's tool enum and a system-prompt
+line steering toward it, which bears directly on criterion (a), so a rollout at any
+later commit is exploratory rather than the registered test.
 The registration fixes the thresholds; it does not say what happens when a seed
 never measures E1, so that rule is fixed here rather than chosen after the fact:
 

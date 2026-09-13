@@ -150,6 +150,8 @@ The agent loses to a pre-written 12-line schedule on all three targets that sche
 
 Honest caveat: the previously published `1 signed / 2 narrowed / 5 rejected` **cannot be re-derived** — its trace files are gone. The line above is from clean, hash-verified traces under the corrected referee. Two verdicts moved because of referee bugs rather than agent merit: the prompt told the agent to omit axes it wasn't claiming about and the referee then rejected it for omitting them; and citing *extra* supporting evidence made a claim score *worse*.
 
+**`h_frontier_explores` is registered and unrun.** No working frontier-model API key was available to this project: the registration predates any key, and the one obtained afterwards was rejected by the API when the run was attempted. It stays registered rather than withdrawn, because the null above is confounded with model capacity and this is the experiment that decides it — if a stronger model explores the `method` axis, the constraint was capacity; if it also fixates on `direct`, the constraint is the harness (the tool schema and system prompt), which is the actionable outcome. "This same harness" is pinned to `c51235e`, the code the Qwen traces came from: a later commit added `direct_aug` to the agent's tools and a prompt line steering it there, so a run at `HEAD` would not be the registered test. The scorer, `analysis/frontier_explores.py`, was written before any result and reproduces the Qwen baseline — 3 of 8 seeds, mean best E1 0.19256, failing both thresholds. (The registration's 0.19003 came from the superseded sweep; its thresholds are absolute, so no verdict depends on that figure.) It needs a working key and one command.
+
 ---
 
 ## Reproduce it

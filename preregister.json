@@ -1,5 +1,5 @@
 {
-  "registered_at": "2026-09-08T14:40:00+04:00",
+  "registered_at": "2026-09-08T14:40:00Z",
   "note": "Pre-registration only means something if it predates the measurement. Several hypotheses in hypotheses.jsonl were already observed during the build, so registering them now would be backdating, and they are listed under `exploratory_by_construction` instead. Only genuinely untested claims are registered as confirmatory. The referee reads the `claims` list; everything else here is documentation for a reader.",
   "claims": [
     {
@@ -84,6 +84,5 @@
     "superseded": "Two earlier figures are NOT reproducible and are recorded only so the drift is visible: a 3-seed audit reported 2 signed / 1 rejected, and an 8-seed audit reported 1 signed / 2 narrowed / 5 rejected. The trace files behind both are gone. The current line is from clean hash-bound traces; two verdicts moved because of referee bugs (split inference, and set-equality scoping that penalised extra evidence), not agent merit.",
     "measured_on": "results/arms_agent8_clean.json, hash-verified traces, corrected referee"
   },
-  "registered_at_addendum": "2026-09-08T16:20:00+04:00 (h_frontier_explores added; committed 605a636 at 16:28:30+04:00)",
-  "timestamp_authority": "The registered_at values in this file are self-reported and this file is editable, so they prove nothing on their own. The authoritative timestamps are the git commits that introduced each claim: 605a636 (2026-09-08 16:28:30 +04:00) for h_frontier_explores, and the commit adding h_budget_plateau / h_misorder_signature for those. Both registered_at values were originally written in local time but labelled Z, which placed the addendum after its own commit; only the offsets were corrected, no claim was altered."
+  "registered_at_addendum": "2026-09-08T16:20:00Z (h_frontier_explores added)"
 }

@@ -880,9 +880,14 @@ finding landing on this project's own setup.
   with capacity** and must not be read as "LLM agents cannot do this". The registered
   hypothesis that would separate the two — `h_frontier_explores`, which predicts a
   stronger model explores the method axis in ≥ 6 of 8 seeds and reaches within 20% of the
-  grid's 0.06446 eV — remains **unrun**. It is registered with a hash, and a null there
-  would be the more useful outcome, because it would move the diagnosis from capacity to
-  harness.
+  grid's 0.06446 eV — is **registered and unrun**. The registration predates any key, and
+  the key obtained afterwards was rejected by the API when the run was attempted. It is
+  kept rather than withdrawn. Its registration is commit `605a636`; its harness is pinned
+  to `c51235e`, the code the Qwen traces came from, because `direct_aug` and a prompt line
+  steering toward it were added later; and its scorer, `analysis/frontier_explores.py`,
+  was written before any result and reproduces the Qwen baseline (3 of 8, 0.19256). A null
+  there would be the more useful outcome, because it would move the diagnosis from
+  capacity to harness.
 - **Gradient boosting on fingerprints is a weak predictor**, chosen for throughput
   (~10 s/fit). It discards the 3D geometry QM8 ships. The Δ-model barely notices; the
   direct model is crippled by it, so any Δ-vs-direct gap is partly a statement about the
